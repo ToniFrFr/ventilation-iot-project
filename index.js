@@ -1,9 +1,19 @@
 'use strict'
 
 const express = require('express');
+const bodyparser = require('body-parser')
+const dotenv = require('dotenv').config();
+const mqtt = require('mqtt');
+const controllerRouter = require('./routes/controller');
 
 const app = express();
-const PORT = 3000;
+app.use(bodyparser.urlencoded({ extended: false }))
+app.use(bodyparser.json())
+
+app.use('/public', express.static('public'))
+app.use('/controller', controllerRouter)
+
+const PORT = process.env.PORT | 3000;
 
 app.get('/', (_req, res) => {
     res.statusCode = 200;
