@@ -1,0 +1,19 @@
+{
+  "name": "iot-project-server-side",
+  "version": "1.0.0",
+  "description": "IoT project's fullstack/server side implementation project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start_server": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.metropolia.fi:embedded-iot-project/iot-project-server-side.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

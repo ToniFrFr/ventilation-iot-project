@@ -1,5 +1,7 @@
 # IoT Project Server Side
 
+This is the server side/fullstack implementation of the Internet of Things project. Developed by group 1.
+To start the server, clone the master onto your computer, and run the command `npm run start_server` in your  console on the root directory of the repository
 
 
 ## Getting started
