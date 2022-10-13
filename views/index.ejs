@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project front</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<div class="row">
+    <article class="tabs">
+        <input type="radio" checked="checked" id="auto-mode" name="group-one">
+        <label for="auto-mode" class="tab_block">
+            <section>
+                <h2>Automatic</h2>
+
+                <div>
+                    <p><b>Automatic mode</b></p>
+                    <p>In automatic mode, the user sets the target pressure. System reacts to this parameter and displays statistics.</p>
+                </div>
+
+                <div class="slidecontainer">
+                    <p id="pressure-para-automatic"><b>Pressure (pa): </b></p>
+                    <input type="range" min="0" max="120" value="60" class="slider" id="pressure-slider-automatic">
+                </div>
+
+                <div class="slidecontainer">
+                    <p id="locked-para-automatic"><b>Fan speed: </b></p>
+                    <input type="range" min="0" max="100" value="50" class="slider" id="locked-slider-automatic">
+                </div>
+
+                <div id="div-all-mode-invariants">
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Temp</p>
+                    </div>
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Rh</p>
+                    </div>
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Co2</p>
+                    </div>
+                </div>
+
+            </section>
+        </label>
+        <input type="radio" id="manual-mode" name="group-one">
+        <label for="manual-mode" class="tab_block">
+            <section>
+                <h2>Manual</h2>
+
+                <div>
+                    <p><b>Manual mode</b></p>
+                    <p>In manual mode, the user sets the fan speed. System reacts to this parameter and displays statistics.</p>
+                </div>
+
+                <div class="slidecontainer">
+                    <p id="locked-para-manual"><b>Pressure (pa): </b></p>
+                    <input type="range" min="0" max="120" value="60" class="slider" id="locked-slider-manual">
+                </div>
+
+                <div class="slidecontainer">
+                    <p id="speed-para-manual"><b>Fan speed: </b></p>
+                    <input type="range" min="0" max="100" value="50" class="slider" id="speed-slider-manual">
+                </div>
+
+                <div id="div-all-mode-invariants">
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Temp</p>
+                    </div>
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Rh</p>
+                    </div>
+                    <div id="div-mode-invariant-data">
+                        <p id="p-mode-invariant-data">Co2</p>
+                    </div>
+                </div>
+
+            </section>
+        </label>
+        <div class="clear-float"></div>
+    </article>
+</div>
+
+<script src="brain.js"></script>
+
+</body>
+</html>
