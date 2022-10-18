@@ -92,6 +92,14 @@ input[type=radio]:checked + label h2 {
     height: 100px;
 }
 
-#p-mode-invariant-data {
+.p-mode-invariant-data {
     font-size: 2em;
+}
+
+#btn_send_pressure {
+    padding: 5px;
+}
+
+#btn_send_speed {
+    padding: 5px;
 }

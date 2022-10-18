@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Project front</title>
-    <link href="http://localhost:3000/public/css/styles.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+
 </head>
 <body>
+
+
+
 <div class="row">
     <article class="tabs">
         <input type="radio" checked="checked" id="auto-mode" name="group-one">
@@ -21,6 +25,7 @@
                 <div class="slidecontainer">
                     <p id="pressure-para-automatic"><b>Pressure (pa): </b></p>
                     <input type="range" min="0" max="120" value="60" class="slider" id="pressure-slider-automatic">
+                    <input type="submit" value="Send" id="btn_send_pressure">
                 </div>
 
                 <div class="slidecontainer">
@@ -30,13 +35,13 @@
 
                 <div id="div-all-mode-invariants">
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Temp</p>
+                        <p class="p-mode-invariant-data" id="temp-p">Temp</p>
                     </div>
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Rh</p>
+                        <p class="p-mode-invariant-data" id="rh-p">Rh</p>
                     </div>
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Co2</p>
+                        <p class="p-mode-invariant-data" id="co2-p">Co2</p>
                     </div>
                 </div>
 
@@ -60,17 +65,18 @@
                 <div class="slidecontainer">
                     <p id="speed-para-manual"><b>Fan speed: </b></p>
                     <input type="range" min="0" max="100" value="50" class="slider" id="speed-slider-manual">
+                    <input type="submit" value="Send" id="btn_send_speed">
                 </div>
 
                 <div id="div-all-mode-invariants">
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Temp</p>
+                        <p class="p-mode-invariant-data" id="temp-p">Temp</p>
                     </div>
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Rh</p>
+                        <p class="p-mode-invariant-data" id="rh-p">Rh</p>
                     </div>
                     <div id="div-mode-invariant-data">
-                        <p id="p-mode-invariant-data">Co2</p>
+                        <p class="p-mode-invariant-data" id="co2-p">Co2</p>
                     </div>
                 </div>
 
@@ -80,7 +86,7 @@
     </article>
 </div>
 
-<script src="http://localhost:3000/public/script/brain.js"></script>
+<script src="brain.js"></script>
 
 </body>
 </html>
