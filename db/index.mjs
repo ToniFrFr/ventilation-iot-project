@@ -1,6 +1,8 @@
 'use strict';
 
-import { authenticate_user, get_user_caps } from 'postgres';
+import { Postgres } from './postgres.mjs';
+
+const db = await Postgres.getDb();
 
 class User {
 	constructor(username) {
@@ -9,7 +11,7 @@ class User {
 
 	async authenticate(password) {
 		try {
-			return await authenticate_user(this.username, password);
+			return await db.authenticate_user(this.username, password);
 		} catch(e) {
 			console.error(e);
 			return false;
@@ -17,9 +19,11 @@ class User {
 	}
 
 	get capabilities() {
-		return get_user_caps(this.username);
+		return db.get_user_caps(this.username);
 	}
 
+	async grant_capability(capability) {
+		await db.grant_cap(this.username, capability);
+	}
 }
-
 
