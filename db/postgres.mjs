@@ -1,5 +1,7 @@
 'use strict';
 
+//@ts-check
+
 import * as pg from 'pg';
 const { Pool } = pg.default;
 // pg is not an ES6 module, so needs some massaging to function with import
@@ -59,7 +61,7 @@ class VersionsTable {
 
 export class Postgres {
 	constructor() {
-		this.pool = new Pool(localConfig);
+		this.pool = new Pool(devConfig);
 		// the pool will emit an error on behalf of any idle clients
 		// it contains if a backend error or network partition happens
 		this.pool.on('error', (err, client) => {
@@ -87,13 +89,13 @@ export class Postgres {
 		await db.prepare_table(
 			"measurements", [`
 			CREATE TABLE IF NOT EXISTS measurements (
-				sequence SERIAL PRIMARY KEY,
+				nr INT PRIMARY KEY,
 				datetime TIMESTAMP WITH TIME ZONE,
 				pressure SMALLINT,
 				co2 SMALLINT,
 				temperature SMALLINT,
-				humidity SMALLINT,
-				rpm SMALLINT,
+				rh SMALLINT,
+				speed SMALLINT,
 				auto BOOLEAN
 			);`]);
 		await db.prepare_table(
@@ -101,8 +103,7 @@ export class Postgres {
 			CREATE TABLE IF NOT EXISTS authentication_log (
 				eventId SERIAL PRIMARY KEY,
 				datetime TIMESTAMP WITH TIME ZONE,
-				username VARCHAR(${usernameLenMax}) references users(username),
-				co2 SMALLINT
+				username VARCHAR(${usernameLenMax}) references users(username)
 			);`]);
 		return db;
 	}
@@ -208,6 +209,36 @@ export class Postgres {
 			INSERT INTO capabilities (username, capability)
 			VALUES ($1, $2);`, [username, capability]);
 	}
+
+	async save_sample(sample) {
+		await this.run(`
+			INSERT INTO measurements
+			(nr, datetime, pressure, co2, temperature, rh, speed, auto)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+			`, [sample.nr, sample.datetime, sample.pressure, sample.co2, sample.temperature,
+				sample.rh, sample.speed, sample.auto]);
+	}
+
+	async* get_samples(nr_low, nr_high) {
+		const client = await this.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const queryText = `
+			SELECT * FROM measurements
+			WHERE nr >= $1 AND nr <= $2;`
+			const res = await client.query(queryText, [nr_low, nr_high]);
+			await client.query('COMMIT');
+			for await(let row of res.rows) {
+				yield row;
+			}
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
+	}
+
 }
 
 
