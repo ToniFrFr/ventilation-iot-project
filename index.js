@@ -1,30 +1,29 @@
 'use strict'
 
 const express = require('express');
-const bodyparser = require('body-parser')
-const jsonparser = bodyparser.json()
+const bodyparser = require('body-parser');
+const jsonparser = bodyparser.json();
 const dotenv = require('dotenv').config();
 const mqtt = require('mqtt');
-const ejs = require('ejs')
-const path = require('path')
-const fs = require('fs')
-const WebSocket = require('ws')
+const ejs = require('ejs');
+const path = require('path');
+const fs = require('fs');
+const WebSocket = require('ws');
 const controllerRouter = require('./routes/controller');
-
 const app = express();
 app.set('view engine', 'ejs')
 
 app.use(bodyparser.urlencoded({ extended: false }))
 app.use(bodyparser.json())
 
-app.use('/public', express.static('public'))
 app.use('/controller', controllerRouter)
-app.use(express.static(path.join(__dirname, "js")))
 app.use(express.static(__dirname + '/public/scripts'))
 app.use(express.static(__dirname + '/public/css'))
 
 const PORT = process.env.PORT | 3000;
 
+
+// WebSockets configuration for server-client communication
 const server = new WebSocket.Server({
     port: 3030
 })
@@ -45,7 +44,7 @@ server.on('connection', function (socket) {
             console.log('Sending from AUTOMATIC TAB')
             let msg_to_controller = {
                 auto : recMsg.auto,
-                pressure : recMsg.pressure
+                pressure : parseFloat(recMsg.pressure)
             }
             console.log(msg_to_controller)
             /* Below commented out, not sure if working. */
@@ -54,7 +53,7 @@ server.on('connection', function (socket) {
             console.log('Sending from MANUAL TAB')
             let msg_to_controller = {
                 auto : recMsg.auto,
-                speed : recMsg.speed
+                speed : parseFloat(recMsg.speed)
             }
             console.log(msg_to_controller)
             /* Below commented out, not sure if working. */
@@ -70,7 +69,7 @@ server.on('connection', function (socket) {
 })
 
 
-// New MQTT connection #################
+// New MQTT connection
 const mqttClient = mqtt.connect('mqtt://localhost:1883')
 
 // On successful connection, subscribe to topic 'controller/status'
@@ -84,15 +83,28 @@ mqttClient.on('connect', () => {
 })
 
 // Received MQTT message
-mqttClient.on('message', (topic, message) => {
+mqttClient.on('message', async (topic, message) => {
     let mqtt_topic = topic
 
     // All received messages should have topic 'controller/status'
     // Currently all messages have topic 'test/topic'
     if (topic === 'test/topic') {
+        const {Measurement} = await import('./db/index.mjs');
+
         console.log('ON SERVER SIDE, receiving MQTT from broker')
         let mqtt_message_parsed = JSON.parse(message)
+
+        // Sending measurements to DB
+        /*
+        mqtt_message_parsed.datetime = new Date()
+        let measurement = new Measurement(mqtt_message_parsed)
+        await measurement.submit()
+        */
+
+        // Send received MQTT message to all connected WebSockets.
+        // This might not stay this way, possibly send to DB and fetch from there to WebSockets?
         sockets.forEach(s => s.send(JSON.stringify(mqtt_message_parsed)))
+
     }
 
     // Discard messages if topic is incorrect
