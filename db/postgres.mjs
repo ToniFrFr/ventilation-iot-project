@@ -275,7 +275,7 @@ class MeasurementsTable {
 			await client.query('BEGIN');
 			const queryText = `
 			SELECT * FROM measurements
-			WHERE datetime >= $2 AND datetime <= $3;`
+			WHERE datetime >= $1 AND datetime <= $2;`
 			const res = await client.query(queryText, [time_low, time_high]);
 			await client.query('COMMIT');
 			for await(let row of res.rows) {
