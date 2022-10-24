@@ -4,89 +4,158 @@
     <meta charset="UTF-8">
     <title>Project front</title>
     <link href="styles.css" rel="stylesheet">
-
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body>
-
-
-
+</div>
 <div class="row">
-    <article class="tabs">
-        <input type="radio" checked="checked" id="auto-mode" name="group-one">
-        <label for="auto-mode" class="tab_block">
-            <section>
-                <h2>Automatic</h2>
+    <div class="second" id="controller">
+        <article class="tabs">
+            <input type="radio" checked="checked" id="auto-mode" name="group-one">
+            <label for="auto-mode" class="tab_block">
+                <section>
+                    <h2>Automatic</h2>
 
-                <div>
-                    <p><b>Automatic mode</b></p>
-                    <p>In automatic mode, the user sets the target pressure. System reacts to this parameter and displays statistics.</p>
-                </div>
-
-                <div class="slidecontainer">
-                    <p id="pressure-para-automatic"><b>Pressure (pa): </b></p>
-                    <input type="range" min="0" max="120" value="60" class="slider" id="pressure-slider-automatic">
-                    <input type="submit" value="Send" id="btn_send_pressure">
-                </div>
-
-                <div class="slidecontainer">
-                    <p id="locked-para-automatic"><b>Fan speed: </b></p>
-                    <input type="range" min="0" max="100" value="50" class="slider" id="locked-slider-automatic">
-                </div>
-
-                <div id="div-all-mode-invariants">
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="temp-p">Temp</p>
+                    <div>
+                        <p><b>Automatic mode</b></p>
+                        <p>In automatic mode, the user sets the target pressure. System reacts to this parameter and displays statistics.</p>
                     </div>
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="rh-p">Rh</p>
+
+                    <div class="slidecontainer">
+                        <p id="pressure-para-automatic"><b>Pressure (pa): </b></p>
+                        <input type="range" min="0" max="120" value="60" class="slider" id="pressure-slider-automatic">
+                        <input type="submit" value="Send" id="btn_send_pressure">
                     </div>
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="co2-p">Co2</p>
+
+                    <div class="slidecontainer">
+                        <p id="locked-para-automatic"><b>Fan speed: </b></p>
+                        <input type="range" min="0" max="100" value="50" class="slider" id="locked-slider-automatic">
                     </div>
-                </div>
 
-            </section>
-        </label>
-        <input type="radio" id="manual-mode" name="group-one">
-        <label for="manual-mode" class="tab_block">
-            <section>
-                <h2>Manual</h2>
-
-                <div>
-                    <p><b>Manual mode</b></p>
-                    <p>In manual mode, the user sets the fan speed. System reacts to this parameter and displays statistics.</p>
-                </div>
-
-                <div class="slidecontainer">
-                    <p id="locked-para-manual"><b>Pressure (pa): </b></p>
-                    <input type="range" min="0" max="120" value="60" class="slider" id="locked-slider-manual">
-                </div>
-
-                <div class="slidecontainer">
-                    <p id="speed-para-manual"><b>Fan speed: </b></p>
-                    <input type="range" min="0" max="100" value="50" class="slider" id="speed-slider-manual">
-                    <input type="submit" value="Send" id="btn_send_speed">
-                </div>
-
-                <div id="div-all-mode-invariants">
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="temp-p">Temp</p>
+                    <div id="div-all-mode-invariants">
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="temp-p">Temp</p>
+                        </div>
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="rh-p">Rh</p>
+                        </div>
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="co2-p">Co2</p>
+                        </div>
                     </div>
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="rh-p">Rh</p>
-                    </div>
-                    <div id="div-mode-invariant-data">
-                        <p class="p-mode-invariant-data" id="co2-p">Co2</p>
-                    </div>
-                </div>
 
-            </section>
-        </label>
-        <div class="clear-float"></div>
-    </article>
+                </section>
+            </label>
+            <input type="radio" id="manual-mode" name="group-one">
+            <label for="manual-mode" class="tab_block">
+                <section>
+                    <h2>Manual</h2>
+
+                    <div>
+                        <p><b>Manual mode</b></p>
+                        <p>In manual mode, the user sets the fan speed. System reacts to this parameter and displays statistics.</p>
+                    </div>
+
+                    <div class="slidecontainer">
+                        <p id="locked-para-manual"><b>Pressure (pa): </b></p>
+                        <input type="range" min="0" max="120" value="60" class="slider" id="locked-slider-manual">
+                    </div>
+
+                    <div class="slidecontainer">
+                        <p id="speed-para-manual"><b>Fan speed: </b></p>
+                        <input type="range" min="0" max="100" value="50" class="slider" id="speed-slider-manual">
+                        <input type="submit" value="Send" id="btn_send_speed">
+                    </div>
+
+                    <div id="div-all-mode-invariants">
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="temp-p">Temp</p>
+                        </div>
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="rh-p">Rh</p>
+                        </div>
+                        <div id="div-mode-invariant-data">
+                            <p class="p-mode-invariant-data" id="co2-p">Co2</p>
+                        </div>
+                    </div>
+
+                </section>
+            </label>
+
+            <div class="clear-float"></div>
+        </article>
+    </div>
+
+    <div class="third" id="small_graphs">
+        <div class="chartContainer">
+            <div class="chart temp" id="temp_Chart"></div>
+            <div class="chart co2" id="co2_Chart"></div>
+        </div>
+        <div class="chartContainer">
+            <div class="chart rh" id="rh_Chart"></div>
+            <div class="chart pressure" id="pressure_Chart"></div>
+        </div>
+    </div>
+
+    <div class="fourth" id="big_graph">
+        <div class="chartContainer">
+            <div class="chart configurable" id="configurable_Chart"></div>
+        </div>
+
+        <div class="checkBoxes">
+            <div class="checkBoxDiv">
+                <label for="checkTemp">Graph temperature</label>
+                <input type="checkbox" class="checkbox" id="checkTemp" onclick="readChecked()" checked />
+            </div>
+            <div class="checkBoxDiv">
+                <label for="checkCo2">Graph co2</label>
+                <input type="checkbox" class="checkbox" id="checkCo2" onclick="readChecked()" checked />
+            </div>
+            <div class="checkBoxDiv">
+                <label for="checkRh">Graph relative humidity</label>
+                <input type="checkbox" class="checkbox" id="checkRh" onclick="readChecked()" checked />
+            </div>
+            <div class="checkBoxDiv">
+                <label for="checkPressure">Graph pressure</label>
+                <input type="checkbox" class="checkbox" id="checkPressure" onclick="readChecked()" checked />
+            </div>
+        </div>
+    </div>
+
+    <!-- For range select graph. Not working with DB. -->
+    <div class="fifth" id="range_graph">
+        <div class="dataSelection">
+            <label for="selection">What data do you want to render?</label>
+            <select id="selection" name="selection">
+                <option value="temperature">Temperature</option>
+                <option value="co2">Co2</option>
+                <option value="pressure">Pressure</option>
+                <option value="rh">Relative Humidity</option>
+            </select>
+        </div>
+        <div class="timeSelection">
+            <label for="time_start">Starting from: </label>
+            <input type="datetime-local" id="time_start" name="time_start" required>
+            <label for="time_end">Until: </label>
+            <input type="datetime-local" id="time_end" name="time_end" required>
+
+            <label for="sample_start">Start sample</label>
+            <input type="number" id="sample_start" name="sample_start" required>
+            <label for="sample_end">end sample</label>
+            <input type="number" id="sample_end" name="sample_end" required>
+
+            <input type="submit" value="Draw" id="btn_draw">
+        </div>
+
+        <div class="chartContainer">
+            <div class="chart range_configurable" id="configurable_range_Chart"></div>
+        </div>
+    </div>
+
 </div>
 
 <script src="brain.js"></script>
+<script src="grapher.js"></script>
 
 </body>
 </html>
