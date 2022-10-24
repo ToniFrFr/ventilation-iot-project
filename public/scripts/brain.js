@@ -5,6 +5,8 @@ let toggled = true;
 let tempDisplays = document.querySelectorAll('#temp-p');
 let rhDisplays = document.querySelectorAll('#rh-p');
 let co2Displays = document.querySelectorAll('#co2-p');
+let pressureDisplays = document.querySelectorAll('#pressure-p')
+let speedDisplays = document.querySelectorAll('#speed-p')
 
 function getPressure () {
     return pressure;
@@ -26,29 +28,34 @@ function updateAll() {
         pressurePara_unlocked.innerHTML = `<b>Pressure (pa):</b> ${receivedJSON.pressure}`;
         speedSlider_unlocked.value = receivedJSON.speed;
         speedPara_unlocked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
+        pressureSlider_locked.value = receivedJSON.pressure;
+        pressurePara_locked.innerHTML = `<b>Pressure (pa):</b> ${receivedJSON.pressure}`;
+        speedSlider_locked.value = receivedJSON.speed;
+        speedPara_locked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
 
         toggled = !toggled;
     }
+
     pressureSlider_locked.value = receivedJSON.pressure;
     pressurePara_locked.innerHTML = `<b>Pressure (pa):</b> ${receivedJSON.pressure}`;
+    speedSlider_locked.value = receivedJSON.speed;
+    speedPara_locked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
 
     /*
     pressureSlider_unlocked.value = receivedJSON.pressure;
     pressurePara_unlocked.innerHTML = `<b>Pressure (pa):</b> ${receivedJSON.pressure}`;
     */
 
-    speedSlider_locked.value = receivedJSON.speed;
-    speedPara_locked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
-
     /*
     speedSlider_unlocked.value = receivedJSON.speed;
     speedPara_unlocked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
     */
 
-    tempDisplays.forEach(display => display.innerHTML = `<b>Temp: </b>${receivedJSON.temperature}&deg;C`);
+    tempDisplays.forEach(display => display.innerHTML = `<b>Temp: </b>${receivedJSON.temp}&deg;C`);
     rhDisplays.forEach(display => display.innerHTML = `<b>Rh: </b>${receivedJSON.rh}%`);
     co2Displays.forEach(display => display.innerHTML = `<b>Co2: </b>${receivedJSON.co2}`);
-
+    pressureDisplays.forEach(display => display.innerHTML = `<b>Pressure: </b>${receivedJSON.pressure}`)
+    speedDisplays.forEach(display => display.innerHTML = `<b>Speed: </b>${receivedJSON.speed}`)
 }
 
 // WebSocket client
@@ -87,7 +94,6 @@ btn_sendSpeed.addEventListener('click', (e) => {
 let btn_sendPressure = document.getElementById("btn_send_pressure");
 btn_sendPressure.addEventListener('click', (e) => {
     let targetPressure = getPressure();
-
     // Payload to be published to 'topic'
     let payload = {
         code: "MQTT_SEND",

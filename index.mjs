@@ -87,24 +87,24 @@ server.on('connection', function (socket) {
             if (recMsg.auto === "true") {
                 console.log('Setting pressure');
                 let msg_to_controller = {
-                    auto: recMsg.auto,
+                    auto: true,
                     pressure: parseFloat(recMsg.pressure)
                 };
                 console.log(msg_to_controller);
 
                 /* Publishing MQTT message below commented out, not sure if working. */
-                // client.publish(`${recMsg.topic}`, JSON.stringify(msg_to_controller))
+                mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
 
             } else {
                 console.log('Setting speed');
                 let msg_to_controller = {
-                    auto: recMsg.auto,
+                    auto: false,
                     speed: parseFloat(recMsg.speed)
                 };
                 console.log(msg_to_controller);
 
                 /* Publishing MQTT message below commented out, not sure if working. */
-                // client.publish(`${recMsg.topic}`, JSON.stringify(msg_to_controller))
+                mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
             }
         }
         console.log('--------------END---------------');
@@ -118,14 +118,18 @@ server.on('connection', function (socket) {
 })
 
 // New MQTT connection
-const mqttClient = connect('mqtt://localhost:1883');
+
+// Actual:
+const mqttClient = connect('mqtt://192.168.75.42:1883');
+// Simulator:
+// const mqttClient = mqtt.connect('mqtt://localhost:1883')
 
 // On successful connection, subscribe to topic 'controller/status'
 // Currently subscribed to topic 'test/topic' for testing purposes
 mqttClient.on('connect', () => {
-    console.log('MQTT: Connected');
-    mqttClient.subscribe('test/topic', err => {
-        console.log('MQTT: Subscribed to test/topic.');
+    console.log('MQTT: Connected')
+    mqttClient.subscribe('controller/status', err => {
+        console.log('MQTT: Subscribed to controller/status.');
         if (err) throw err;
     })
 })
@@ -134,7 +138,7 @@ mqttClient.on('connect', () => {
 mqttClient.on('message', async (topic, message) => {
     // All received messages should have topic 'controller/status'
     // Currently all messages have topic 'test/topic'
-    if (topic === 'test/topic') {
+    if (topic === 'controller/status') {
         console.log('index.js | mqttClient.on(), receiving MQTT from broker');
         let mqtt_message_parsed = JSON.parse(message);
 
@@ -143,6 +147,7 @@ mqttClient.on('message', async (topic, message) => {
 		let measurement = new Measurement(mqtt_message_parsed);
 		let table = db.getMeasurements();
 		await table.submit(measurement);
+
 
         // Send received MQTT message to all connected WebSockets.
         // This might not stay this way, possibly send to DB and fetch from there to WebSockets?

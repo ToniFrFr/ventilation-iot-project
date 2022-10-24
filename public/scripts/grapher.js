@@ -57,7 +57,7 @@ graphClient.onmessage = (event) => {
 
         sampleNumber = parseFloat(receivedJSON.nr);
 
-        dataPoint_temp = [sampleNumber, parseFloat(receivedJSON.temperature)];
+        dataPoint_temp = [sampleNumber, parseFloat(receivedJSON.temp)];
         dataPoints_temp = pushInto(dataPoints_temp, dataPoint_temp);
 
         dataPoint_co2 = [sampleNumber, parseFloat(receivedJSON.co2)];
@@ -71,7 +71,7 @@ graphClient.onmessage = (event) => {
 
         dataPoint_all = [
             sampleNumber,
-            parseFloat(receivedJSON.temperature),
+            parseFloat(receivedJSON.temp),
             parseFloat(receivedJSON.co2),
             parseFloat(receivedJSON.rh),
             parseFloat(receivedJSON.pressure)

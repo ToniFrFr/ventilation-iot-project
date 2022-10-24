@@ -103,3 +103,31 @@ input[type=radio]:checked + label h2 {
 #btn_send_speed {
     padding: 5px;
 }
+
+.chartContainer {
+    padding: 5px;
+    display: flex;
+}
+.chart {
+    flex: 1;
+}
+.chart:first-child {
+    margin-right: 0px;
+}
+#configurable_Chart {
+    transform: translate(-17%, 0%);
+}
+
+.checkBoxes {
+    padding: 2px;
+    display: flex;
+}
+
+.checkBoxDiv {
+    flex: 1;
+    float:left;
+}
+
+.fifth {
+    padding: 20px;
+}
