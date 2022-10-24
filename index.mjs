@@ -9,7 +9,6 @@ import ejs from 'ejs';
 import path from 'path';
 // const fs = require('fs');
 import { WebSocketServer } from 'ws';
-const Server = WebSocketServer;
 import controllerRouter from './routes/controller.js';
 import { Db, Measurement } from './db/index.mjs';
 import { fileURLToPath } from 'node:url';
@@ -44,7 +43,7 @@ const db = new Db(dbConfig);
 await db.connect();
 
 // WebSockets configuration for server-client communication
-const server = new Server({
+const server = new WebSocketServer({
     port: 3030
 })
 
@@ -66,7 +65,8 @@ server.on('connection', function (socket) {
 
             // Selection = temperature, relative humidity, co2, pressure
             let selection = recMsg.selection
-            let samples = await Measurement.getSamples(recMsg.start, recMsg.end)
+			let table = db.getMeasurements();
+            let samples = await table.getSamplesByNr(recMsg.start, recMsg.end)
             let sampleList = []
 
             for await (let sample of samples) {
@@ -139,8 +139,8 @@ mqttClient.on('message', async (topic, message) => {
         let mqtt_message_parsed = JSON.parse(message)
 
         // Sending measurements to DB
-        mqtt_message_parsed.datetime = new Date()
-        let measurement = new Measurement(mqtt_message_parsed)
+		mqtt_message_parsed.datetime = new Date()
+		let measurement = new Measurement(mqtt_message_parsed)
 		let table = db.getMeasurements();
 		await table.submit(measurement)
 
