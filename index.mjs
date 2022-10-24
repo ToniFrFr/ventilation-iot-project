@@ -1,15 +1,23 @@
 'use strict'
 
-const express = require('express');
+import express from 'express';
 // const bodyparser = require('body-parser');
 // const jsonparser = bodyparser.json();
-const dotenv = require('dotenv').config();
-const mqtt = require('mqtt');
-const ejs = require('ejs');
-// const path = require('path');
+import dotenv from 'dotenv';
+import { connect } from 'mqtt';
+import ejs from 'ejs';
+import path from 'path';
 // const fs = require('fs');
-const WebSocket = require('ws');
-const controllerRouter = require('./routes/controller');
+import { WebSocketServer } from 'ws';
+import controllerRouter from './routes/controller.js';
+import { Db, Measurement } from './db/index.mjs';
+import { fileURLToPath } from 'node:url';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.set('view engine', 'ejs')
 
@@ -22,8 +30,20 @@ app.use(express.static(__dirname + '/public/css'))
 
 const PORT = process.env.PORT | 3000;
 
+const dbConfig = {
+	database: process.env.NODE_ENV === 'production' ? 'iotproject' : 'iotdev',
+	host: process.env.PGHOST, // This is technically redundant, the library checks environment for PGHOST itself
+	user: 'iotapi',
+	ssl: {
+		rejectUnauthorized: false,
+	}
+};
+
+const db = new Db(dbConfig);
+await db.connect();
+
 // WebSockets configuration for server-client communication
-const server = new WebSocket.Server({
+const server = new WebSocketServer({
     port: 3030
 })
 
@@ -45,8 +65,8 @@ server.on('connection', function (socket) {
 
             // Selection = temperature, relative humidity, co2, pressure
             let selection = recMsg.selection
-            const {Measurement} = await import('./db/index.mjs');
-            let samples = await Measurement.get_samples(recMsg.start, recMsg.end)
+			let table = db.getMeasurements();
+            let samples = await table.getSamplesByNr(recMsg.start, recMsg.end)
             let sampleList = []
 
             for await (let sample of samples) {
@@ -98,7 +118,7 @@ server.on('connection', function (socket) {
 })
 
 // New MQTT connection
-const mqttClient = mqtt.connect('mqtt://localhost:1883')
+const mqttClient = connect('mqtt://localhost:1883')
 
 // On successful connection, subscribe to topic 'controller/status'
 // Currently subscribed to topic 'test/topic' for testing purposes
@@ -115,15 +135,14 @@ mqttClient.on('message', async (topic, message) => {
     // All received messages should have topic 'controller/status'
     // Currently all messages have topic 'test/topic'
     if (topic === 'test/topic') {
-        const {Measurement} = await import('./db/index.mjs');
-
         console.log('index.js | mqttClient.on(), receiving MQTT from broker')
         let mqtt_message_parsed = JSON.parse(message)
 
         // Sending measurements to DB
-        // mqtt_message_parsed.datetime = new Date()
-        // let measurement = new Measurement(mqtt_message_parsed)
-        // await measurement.submit()
+		mqtt_message_parsed.datetime = new Date()
+		let measurement = new Measurement(mqtt_message_parsed)
+		let table = db.getMeasurements();
+		await table.submit(measurement)
 
         // Send received MQTT message to all connected WebSockets.
         // This might not stay this way, possibly send to DB and fetch from there to WebSockets?
