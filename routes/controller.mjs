@@ -1,7 +1,6 @@
-const express = require('express');
+import { Router } from 'express';
 
-const controllerRouter = express.Router();
-
+export const controllerRouter = Router();
 
 controllerRouter.post('/settings', (req, res) => {
     res.statusCode = 200
@@ -11,5 +10,3 @@ controllerRouter.post('/settings', (req, res) => {
 })
 
 
-
-module.exports = controllerRouter
