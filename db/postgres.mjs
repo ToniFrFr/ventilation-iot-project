@@ -145,8 +145,6 @@ export class Postgres {
 	}
 	
 	getMeasurementsTable() {
-		console.log(this);
-		console.log(this.db);
 		return new MeasurementsTable(this);
 	}
 }
@@ -225,7 +223,6 @@ class UsersTable {
 
 class MeasurementsTable {
 	constructor(db) {
-		console.log(db);
 		this.db = db;
 		this.epoch = 0;
 	}
@@ -253,7 +250,6 @@ class MeasurementsTable {
 	}
 
 	async* getSamplesByNr(epoch, nr_low, nr_high) {
-		console.log(this.db);
 		const client = await this.db.pool.connect();
 		try {
 			await client.query('BEGIN');
