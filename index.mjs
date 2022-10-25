@@ -31,12 +31,12 @@ app.use(express.static(__dirname + '/public/css'));
 const PORT = process.env.PORT | 3000;
 
 const dbConfig = {
-	database: process.env.NODE_ENV === 'production' ? 'iotproject' : 'iotdev',
-	host: process.env.PGHOST, // This is technically redundant, the library checks environment for PGHOST itself
-	user: 'iotapi',
-	ssl: {
-		rejectUnauthorized: false,
-	}
+    database: process.env.NODE_ENV === 'production' ? 'iotproject' : 'iotdev',
+    host: process.env.PGHOST, // This is technically redundant, the library checks environment for PGHOST itself
+    user: 'iotapi',
+    ssl: {
+        rejectUnauthorized: false,
+    }
 };
 
 const db = new Db(dbConfig);
@@ -65,19 +65,24 @@ server.on('connection', function (socket) {
 
             // Selection = temperature, relative humidity, co2, pressure
             let selection = recMsg.selection;
-			let table = db.getMeasurements();
-            let samples = await table.getSamplesByNr(recMsg.start, recMsg.end);
+            let beginning = new Date(recMsg.start)
+            let end = new Date(recMsg.end)
+
+            let table = db.getMeasurements();
+            let samples = await table.getSamplesByTime(beginning, end);
             let sampleList = [];
 
             for await (let sample of samples) {
                 sampleList.push(sample);
             }
+
             let resp_payload = {
                 code: "DB_RESPONSE",
                 selection: selection,
                 data: sampleList
             };
             sockets.forEach(s => s.send(JSON.stringify(resp_payload)));
+
         }
 
         // Received message is a MQTT to be sent to controller
@@ -91,10 +96,7 @@ server.on('connection', function (socket) {
                     pressure: parseFloat(recMsg.pressure)
                 };
                 console.log(msg_to_controller);
-
-                /* Publishing MQTT message below commented out, not sure if working. */
                 mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
-
             } else {
                 console.log('Setting speed');
                 let msg_to_controller = {
@@ -102,13 +104,10 @@ server.on('connection', function (socket) {
                     speed: parseFloat(recMsg.speed)
                 };
                 console.log(msg_to_controller);
-
-                /* Publishing MQTT message below commented out, not sure if working. */
                 mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
             }
         }
         console.log('--------------END---------------');
-
     })
 
     socket.on('close', function() {
@@ -120,12 +119,11 @@ server.on('connection', function (socket) {
 // New MQTT connection
 
 // Actual:
-const mqttClient = connect('mqtt://192.168.75.42:1883');
+// const mqttClient = connect('mqtt://192.168.75.42:1883');
 // Simulator:
-// const mqttClient = mqtt.connect('mqtt://localhost:1883')
+const mqttClient = connect('mqtt://localhost:1883')
 
 // On successful connection, subscribe to topic 'controller/status'
-// Currently subscribed to topic 'test/topic' for testing purposes
 mqttClient.on('connect', () => {
     console.log('MQTT: Connected')
     mqttClient.subscribe('controller/status', err => {
@@ -137,17 +135,15 @@ mqttClient.on('connect', () => {
 // Received MQTT message
 mqttClient.on('message', async (topic, message) => {
     // All received messages should have topic 'controller/status'
-    // Currently all messages have topic 'test/topic'
     if (topic === 'controller/status') {
         console.log('index.js | mqttClient.on(), receiving MQTT from broker');
         let mqtt_message_parsed = JSON.parse(message);
 
         // Sending measurements to DB
-		mqtt_message_parsed.datetime = new Date();
-		let measurement = new Measurement(mqtt_message_parsed);
-		let table = db.getMeasurements();
-		await table.submit(measurement);
-
+        mqtt_message_parsed.datetime = new Date();
+        let measurement = new Measurement(mqtt_message_parsed);
+        let table = db.getMeasurements();
+        await table.submit(measurement);
 
         // Send received MQTT message to all connected WebSockets.
         // This might not stay this way, possibly send to DB and fetch from there to WebSockets?
@@ -160,10 +156,23 @@ mqttClient.on('message', async (topic, message) => {
     }
 })
 
+// Front page
 app.get('/', (_req, res) => {
     res.statusCode = 200;
     res.render('index');
 });
+
+// Login page
+app.get('/login', (_req, res) => {
+    res.statusCode = 200;
+    res.render('login')
+})
+
+// Activity history
+app.get('/history', (_req, res) => {
+    res.statusCode = 200;
+    res.render('history')
+})
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}, localhost link: http://localhost:${PORT}`);
