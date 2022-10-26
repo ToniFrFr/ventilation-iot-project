@@ -17,7 +17,7 @@ export class Db {
 
 	getUsers() {
 		try {
-			return new Users(this.db.getMeasurementsTable());
+			return new Users(this.db.getUsersTable());
 		} catch(e) {
 			console.error(e);
 			throw new Error("Did you forget to connect to the database?");
@@ -42,7 +42,7 @@ class User {
 
 	async authenticate(password) {
 		try {
-			this.table.authenticateUser(this.username, password);
+			return await this.table.authenticateUser(this.username, password);
 		} catch(e) {
 			console.error(e);
 			return false;
