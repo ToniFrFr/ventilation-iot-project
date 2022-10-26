@@ -122,7 +122,10 @@ export class Postgres {
 				username VARCHAR(${usernameLenMax}) references users(username)
 			);`,
 			`
-			ALTER TABLE authentication_log ADD COLUMN eventDesc VARCHAR(64);`]);
+			ALTER TABLE authentication_log ADD COLUMN eventDesc VARCHAR(64);`,
+			`
+			ALTER TABLE authentication_log DROP COLUMN eventDesc;
+			ALTER TABLE authentication_log ADD COLUMN message VARCHAR(200);`]);
 	}
 
 	/// @brief    Runs a query in the database
