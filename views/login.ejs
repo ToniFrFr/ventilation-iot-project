@@ -17,7 +17,13 @@
             <button type="submit">Login</button>
         </div>
     </form>
+	<% if(error) { %>
+		<p class="login_error">Login details incorrect</p>
+	<% } %>
 </div>
 
 </body>
+<script>
+	history.pushState(null, "", location.href.split("?")[0]);
+</script>
 </html>

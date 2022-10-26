@@ -55,7 +55,7 @@ function updateAll() {
 }
 
 // WebSocket client
-let client = new WebSocket('ws://localhost:3030');
+let client = new WebSocket('wss://@DOMAIN@');
 
 // Receive message sent from server
 // Receiving WebSocket messages containing status updates (MQTT -> SERVER -> CLIENT)
