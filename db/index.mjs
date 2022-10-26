@@ -32,6 +32,15 @@ export class Db {
 			throw new Error("Did you forget to connect to the database?");
 		}
 	}
+
+	getEvents() {
+		try {
+			return new Events(this.db.getEventsTable());
+		} catch(e) {
+			console.error(e);
+			throw new Error("Did you forget to connect to the database?");
+		}
+	}
 }
 
 class User {
@@ -78,11 +87,14 @@ class Users {
 
 	async createUser(username, password) {
 		await this.table.createUser(username, password);
-		return new User(this, username);
+		return new User(this.table, username);
 	}
 
 	async getUser(username) {
-		return new User(this, username);
+		if(await this.table.existsUser(username)) {
+			return new User(this.table, username);
+		}
+		throw new Error("User does not exist");
 	}
 }
 
@@ -106,6 +118,16 @@ class Measurements {
 
 	async submit(sample) {
 		await this.table.saveSample(sample);
+	}
+}
+
+class Events {
+	constructor(table) {
+		this.table = table;
+	}
+
+	async log(username, message) {
+		await this.table.logEvent(username, message);
 	}
 }
 

@@ -186,11 +186,39 @@ export class Postgres {
 	getMeasurementsTable() {
 		return new MeasurementsTable(this);
 	}
+
+	getEventsTable() {
+		return new EventsTable(this);
+	}
 }
 
 class UsersTable {
 	constructor(db) {
 		this.db = db;
+	}
+
+	async existsUser(username) {
+		const queryText = `
+		SELECT (username)
+		AS usermatch
+		FROM users
+		WHERE username = $1;`;
+		const client = await this.db.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const res = await client.query(queryText, [username]);
+			await client.query('COMMIT');
+			console.log(res.rows);
+			if(res.rows.length === 1 && res.rows[0].usermatch) {
+				return true;
+			}
+			return false;
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
 	}
 
 	async createUser(username, password) {
@@ -221,6 +249,7 @@ class UsersTable {
 			await client.query('BEGIN');
 			const res = await client.query(queryText, [username, password]);
 			await client.query('COMMIT');
+			console.log(res.rows);
 			if(res.rows.length === 1) {
 				return res.rows[0].pswmatch;
 			}
@@ -266,8 +295,35 @@ class MeasurementsTable {
 		this.epoch = 0;
 	}
 
-	async getEpoch() {
-		return await this.db.run(`SELECT MAX(epoch) FROM measurements;`);
+	async nextEpoch(nr) {
+		const client = await this.db.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const queryText = `
+			SELECT MAX(epoch) FROM measurements;`
+			let res = await client.query(queryText);
+			let epoch = 0;
+			if(res.rows.length === 1) {
+				epoch = res.rows[0].max
+			}
+			const queryText1 = `
+			SELECT MAX(nr) FROM measurements WHERE epoch = $1;`
+			res = await client.query(queryText1, [epoch]);
+			let max_nr = 0;
+			if(res.rows.length === 1) {
+				max_nr = res.rows[0].max
+			}
+			await client.query('COMMIT');
+			if(nr < max_nr) {
+				return epoch + 1;
+			}
+			return epoch;
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
 	}
 	
 	async getPreviousNr(epoch) {
@@ -277,9 +333,17 @@ class MeasurementsTable {
 	}
 
 	async saveSample(sample) {
-		if(sample.nr < await this.getPreviousNr(await this.getEpoch())) {
-			this.epoch++;
+		while(true) {
+			try {
+				await this.trySaveSample(sample);
+				return;
+			} catch(e) {
+				this.epoch++;
+			}
 		}
+	}
+
+	async trySaveSample(sample) {
 		await this.db.run(`
 			INSERT INTO measurements
 			(epoch, nr, datetime, pressure, co2, temp, rh, speed, auto)
@@ -318,6 +382,7 @@ class MeasurementsTable {
 			const res = await client.query(queryText, [time_low, time_high]);
 			await client.query('COMMIT');
 			for await(let row of res.rows) {
+				console.log(row);
 				yield row;
 			}
 		} catch(e) {
@@ -329,3 +394,55 @@ class MeasurementsTable {
 	}
 }
 
+class EventsTable {
+	constructor(db) {
+		this.db = db;
+	}
+
+	async logEvent(username, message) {
+		await this.db.run(`
+			INSERT INTO authentication_log
+			(datetime, username, message)
+			VALUES ($1, $2, $3);
+			`, [new Date(), username, message]);
+	}
+
+	async* getEvents() {
+		const client = await this.db.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const queryText = `
+			SELECT * FROM authentication_log;`
+			const res = await client.query(queryText);
+			await client.query('COMMIT');
+			for await(let row of res.rows) {
+				yield row;
+			}
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
+	}
+
+	async* getEventsByUser(username) {
+		const client = await this.db.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const queryText = `
+			SELECT * FROM authentication_log
+			WHERE username = $1;`
+			const res = await client.query(queryText, [username]);
+			await client.query('COMMIT');
+			for await(let row of res.rows) {
+				yield row;
+			}
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
+	}
+}

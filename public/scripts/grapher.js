@@ -261,7 +261,7 @@ drawButton.addEventListener("click", async (event) => {
 })
 
 // WebSocket client
-let graphClient = new WebSocket('ws://localhost:3030');
+let graphClient = new WebSocket('wss://@DOMAIN@');
 
 
 // Receiving WebSocket messages from Server
