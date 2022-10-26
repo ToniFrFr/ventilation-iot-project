@@ -37,7 +37,7 @@ function pushInto (arr, val) {
 }
 
 // WebSocket client
-let graphClient = new WebSocket('ws://localhost:3030');
+let graphClient = new WebSocket('wss://@DOMAIN@');
 
 // Receiving WebSocket messages from Server
 graphClient.onmessage = (event) => {
@@ -178,8 +178,8 @@ drawButton.addEventListener("click", async (event) => {
 
     let graph_Payload = {
         code: "DB_REQUEST",
-        start: start,
-        end: end,
+        start: startTime,
+        end: endTime,
         selection: selection
     }
     graphClient.send(JSON.stringify(graph_Payload))
