@@ -6,11 +6,22 @@ import * as pg from 'pg';
 const { Pool } = pg.default;
 // pg is not an ES6 module, so needs some massaging to function with import
 
+/// @brief    Class for database structure versioning
+/// @details  This class is used for keeping track of the versions of the format of each
+///           of the tables of the database, so they can be correctly configured to the
+///           newest state automatically.
 class VersionsTable {
+	/// @brief    Constructor for VersionsTable class
+	/// @details  Constructs class by giving it reference to database
+	/// @param[in]  db    Postgres    database handle for doing db operations
 	constructor(db) {
 		this.db = db;
 	}
 
+	/// @brief    Pseudo-constructor for VersionsTable class
+	/// @details  Constructs and returns class, but also creates underlying versions storage
+	/// @param[in]  db    Postgres    database handle for doing db operations
+	/// @return    The newly constructed VersionsTable object
 	static async getTable(db) {
 		await db.run(`
 			CREATE TABLE IF NOT EXISTS versions (
@@ -20,6 +31,10 @@ class VersionsTable {
 		return new VersionsTable(db);
 	}
 
+	/// @brief    Function for current version status
+	/// @details  Checks current database structure versions from the versions table
+	/// @param[in]  table    string    database handle for doing db operations
+	/// @return    The version retrieved from the table
 	async version(table) {
 		const client = await this.db.pool.connect();
 		try {
@@ -40,7 +55,12 @@ class VersionsTable {
 	}
 }
 
+/// @brief    Class for database
+/// @details  This class is for providing an interface to the Postgresl database
 export class Postgres {
+	/// @brief    Constructor for Postgres class
+	/// @details  Constructs class by giving it the configuration for the database connection
+	/// @param[in]  config    object    object with configuration attributes
 	constructor(config) {
 		this.pool = new Pool(config);
 		// the pool will emit an error on behalf of any idle clients
@@ -51,6 +71,8 @@ export class Postgres {
 		});
 	}
 
+	/// @brief    Performs lazy initialization of the connection
+	/// @details  Prepares the database tables and migrates all to the newest format
 	async init() {
 		const usernameLenMax = 32;
 		const capLenMax = 16;
@@ -98,9 +120,18 @@ export class Postgres {
 				eventId SERIAL PRIMARY KEY,
 				datetime TIMESTAMP WITH TIME ZONE,
 				username VARCHAR(${usernameLenMax}) references users(username)
-			);`]);
+			);`,
+			`
+			ALTER TABLE authentication_log ADD COLUMN eventDesc VARCHAR(64);`,
+			`
+			ALTER TABLE authentication_log DROP COLUMN eventDesc;
+			ALTER TABLE authentication_log ADD COLUMN message VARCHAR(200);`]);
 	}
 
+	/// @brief    Runs a query in the database
+	/// @details  Executes the provided SQL in the database with the arguments providede
+	/// @param[in] queryText string    The SQL query template string
+	/// @param[in] args      list      List of arguments for replacing placeholders in the template string
 	async run(queryText, args = []) {
 		const client = await this.pool.connect();
 		try {
@@ -115,6 +146,10 @@ export class Postgres {
 		}
 	}
 
+	/// @brief    Prepares an SQL table
+	/// @details  Brings an SQL table to the newest format, by running successive migration queries
+	/// @param[in] name       string    The name of the table
+	/// @param[in] migrations list      List of migration queries
 	async prepareTable(name, migrations) {
 		try {
 			const ver = await this.versions.version(name);
@@ -140,10 +175,14 @@ export class Postgres {
 		}
 	}
 
+	/// @brief    Retrieves a UsersTable class
+	/// @details  Returns an UsersTable class
 	getUsersTable() {
 		return new UsersTable(this);
 	}
 	
+	/// @brief    Retrieves a MeasurementsTable class
+	/// @details  Returns an MeasuremnetsTable class
 	getMeasurementsTable() {
 		return new MeasurementsTable(this);
 	}
