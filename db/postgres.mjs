@@ -98,7 +98,9 @@ export class Postgres {
 				eventId SERIAL PRIMARY KEY,
 				datetime TIMESTAMP WITH TIME ZONE,
 				username VARCHAR(${usernameLenMax}) references users(username)
-			);`]);
+			);`,
+			`
+			ALTER TABLE authentication_log ADD COLUMN eventDesc VARCHAR(64);`]);
 	}
 
 	async run(queryText, args = []) {
