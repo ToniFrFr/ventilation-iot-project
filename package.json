@@ -2,10 +2,10 @@
   "name": "iot-project-server-side",
   "version": "1.0.0",
   "description": "IoT project's fullstack/server side implementation project",
-  "main": "index.js",
+  "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start_server": "node index.js"
+    "start_server": "node index.mjs"
   },
   "repository": {
     "type": "git",
@@ -15,11 +15,14 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.1",
+    "connect-pg-simple": "^7.0.0",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
     "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "mqtt": "^4.3.7",
     "pg": "^8.8.0",
+    "systemd": "^0.4.0",
     "ws": "^8.9.0"
   }
 }
