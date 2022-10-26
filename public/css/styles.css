@@ -146,5 +146,19 @@ input[type=radio]:checked + label h2 {
 }
 
 .partial {
-    margin: 100px 0px;
+    margin: 50px 0px;
+}
+
+.reach_ERROR, .range_chart_ERROR {
+    color: red;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    display: flex;
+    font: 62.5%/1.5 Georgia, serif;
+    font-size: 1.6em;
 }
