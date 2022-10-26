@@ -5,8 +5,6 @@ let toggled = true;
 let tempDisplays = document.querySelectorAll('#temp-p');
 let rhDisplays = document.querySelectorAll('#rh-p');
 let co2Displays = document.querySelectorAll('#co2-p');
-let pressureDisplays = document.querySelectorAll('#pressure-p')
-let speedDisplays = document.querySelectorAll('#speed-p')
 
 function getPressure () {
     return pressure;
@@ -54,8 +52,6 @@ function updateAll() {
     tempDisplays.forEach(display => display.innerHTML = `<b>Temp: </b>${receivedJSON.temp}&deg;C`);
     rhDisplays.forEach(display => display.innerHTML = `<b>Rh: </b>${receivedJSON.rh}%`);
     co2Displays.forEach(display => display.innerHTML = `<b>Co2: </b>${receivedJSON.co2}`);
-    pressureDisplays.forEach(display => display.innerHTML = `<b>Pressure: </b>${receivedJSON.pressure}`)
-    speedDisplays.forEach(display => display.innerHTML = `<b>Speed: </b>${receivedJSON.speed}`)
 }
 
 // WebSocket client
@@ -66,10 +62,9 @@ let client = new WebSocket('ws://localhost:3030');
 client.onmessage = (event) => {
     receivedJSON = JSON.parse(event.data);
 
-    console.log('###############################');
     console.log('brain.js | client.onmessage(), received message from server:');
     console.log(receivedJSON);
-    console.log('###############################');
+
     updateAll();
 }
 

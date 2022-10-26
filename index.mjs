@@ -1,15 +1,12 @@
 'use strict';
 
 import express from 'express';
-// const bodyparser = require('body-parser');
-// const jsonparser = bodyparser.json();
 import dotenv from 'dotenv';
 import { connect } from 'mqtt';
 import ejs from 'ejs';
 import path from 'path';
-// const fs = require('fs');
 import { WebSocketServer } from 'ws';
-import controllerRouter from './routes/controller.js';
+// import controllerRouter from './routes/controller.js';
 import { Db, Measurement } from './db/index.mjs';
 import { fileURLToPath } from 'node:url';
 
@@ -17,14 +14,10 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
+
 app.set('view engine', 'ejs');
-
-// app.use(bodyparser.urlencoded({ extended: false }))
-// app.use(bodyparser.json())
-
-app.use('/controller', controllerRouter);
+// app.use('/controller', controllerRouter);
 app.use(express.static(__dirname + '/public/scripts'));
 app.use(express.static(__dirname + '/public/css'));
 
@@ -56,8 +49,7 @@ server.on('connection', function (socket) {
     // Server-side receives a message from client
     socket.on('message', async function(msg) {
         let recMsg = JSON.parse(msg);
-        console.log('--------------START---------------');
-        console.log('index.JS | socket.on(message), receiving WebSocket from client:');
+        console.log('index.mjs | socket.on(message), receiving WebSocket from client:');
 
         // Received message is a request to database
         if (recMsg.code == "DB_REQUEST") {
@@ -65,8 +57,8 @@ server.on('connection', function (socket) {
 
             // Selection = temperature, relative humidity, co2, pressure
             let selection = recMsg.selection;
-            let beginning = new Date(recMsg.start)
-            let end = new Date(recMsg.end)
+            let beginning = new Date(recMsg.start);
+            let end = new Date(recMsg.end);
 
             let table = db.getMeasurements();
             let samples = await table.getSamplesByTime(beginning, end);
@@ -82,7 +74,6 @@ server.on('connection', function (socket) {
                 data: sampleList
             };
             sockets.forEach(s => s.send(JSON.stringify(resp_payload)));
-
         }
 
         // Received message is a MQTT to be sent to controller
@@ -107,7 +98,6 @@ server.on('connection', function (socket) {
                 mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
             }
         }
-        console.log('--------------END---------------');
     })
 
     socket.on('close', function() {
