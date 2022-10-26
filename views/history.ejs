@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activity History</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+<div style="text-align: center;"> <h1> Activity History </h1> </div>
+
+<div class="center">
+    <input style="width: 200px;" type="text" class="user_selection" id="user_selection" placeholder="Enter User, empty will show all" name="username">
+    <input type="submit" value="Show history" id="btn_history">
+    <div class="history_container">
+        <ul class="all_users_history" id="all_users_history">
+            <!-- historian.js populates the list with <li> elements -->
+        </ul>
+    </div>
+</div>
+</body>
+<script src="historian.js"></script>
+</html>
