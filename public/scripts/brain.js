@@ -39,16 +39,6 @@ function updateAll() {
     speedSlider_locked.value = receivedJSON.speed;
     speedPara_locked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
 
-    /*
-    pressureSlider_unlocked.value = receivedJSON.pressure;
-    pressurePara_unlocked.innerHTML = `<b>Pressure (pa):</b> ${receivedJSON.pressure}`;
-    */
-
-    /*
-    speedSlider_unlocked.value = receivedJSON.speed;
-    speedPara_unlocked.innerHTML = `<b>Fan speed:</b> ${receivedJSON.speed}`;
-    */
-
     tempDisplays.forEach(display => display.innerHTML = `<b>Temp: </b>${receivedJSON.temp}&deg;C`);
     rhDisplays.forEach(display => display.innerHTML = `<b>Rh: </b>${receivedJSON.rh}%`);
     co2Displays.forEach(display => display.innerHTML = `<b>Co2: </b>${receivedJSON.co2}`);

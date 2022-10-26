@@ -15,6 +15,7 @@ let pressureChecked = true;
 let rhChecked = true;
 let speedChecked = true;
 
+let MSG;
 let ERR_MSG;
 let reach_err = false;
 
@@ -42,40 +43,37 @@ function pushInto (arr, val) {
 }
 
 // Get data from received message
-function parseData() {
+function parseData(message) {
     try {
-        console.log('parseData()')
-        console.log(receivedJSON)
-        console.log('parseData() end')
-        reach_err = receivedJSON.error
+        reach_err = message.error
         if (reach_err) {
             document.getElementById('reach_ERROR').innerHTML = `<p>Can not reach desired value.</p>`
         }
 
-        sampleNumber = parseFloat(receivedJSON.nr);
+        sampleNumber = parseFloat(message.nr);
 
-        dataPoint_fan = [sampleNumber, parseFloat(receivedJSON.speed)];
+        dataPoint_fan = [sampleNumber, parseFloat(message.speed)];
         dataPoints_fan = pushInto(dataPoints_fan, dataPoint_fan);
 
-        dataPoint_temp = [sampleNumber, parseFloat(receivedJSON.temp)];
+        dataPoint_temp = [sampleNumber, parseFloat(message.temp)];
         dataPoints_temp = pushInto(dataPoints_temp, dataPoint_temp);
 
-        dataPoint_co2 = [sampleNumber, parseFloat(receivedJSON.co2)];
+        dataPoint_co2 = [sampleNumber, parseFloat(message.co2)];
         dataPoints_co2 = pushInto(dataPoints_co2, dataPoint_co2);
 
-        dataPoint_rh = [sampleNumber, parseFloat(receivedJSON.rh)];
+        dataPoint_rh = [sampleNumber, parseFloat(message.rh)];
         dataPoints_rh = pushInto(dataPoints_rh, dataPoint_rh);
 
-        dataPoint_pressure = [sampleNumber, parseFloat(receivedJSON.pressure)];
+        dataPoint_pressure = [sampleNumber, parseFloat(message.pressure)];
         dataPoints_pressure = pushInto(dataPoints_pressure, dataPoint_pressure);
 
         dataPoint_all = [
             sampleNumber,
-            parseFloat(receivedJSON.temp),
-            parseFloat(receivedJSON.co2),
-            parseFloat(receivedJSON.rh),
-            parseFloat(receivedJSON.pressure),
-            parseFloat(receivedJSON.speed)
+            parseFloat(message.temp),
+            parseFloat(message.co2),
+            parseFloat(message.rh),
+            parseFloat(message.pressure),
+            parseFloat(message.speed)
         ];
         dataPoints_all = pushInto(dataPoints_all, dataPoint_all);
     } catch (error) {
@@ -268,13 +266,13 @@ let graphClient = new WebSocket('ws://localhost:3030');
 
 // Receiving WebSocket messages from Server
 graphClient.onmessage = (event) => {
-    let MSG = JSON.parse(event.data);
+    MSG = JSON.parse(event.data);
     let MSG_CODE = MSG.code;
 
     if (MSG_CODE == "DB_RESPONSE") {
         drawConfigurable(MSG);
     } else {
-        parseData()
+        parseData(MSG)
         drawIndividuals();
         drawReactive();
     }
