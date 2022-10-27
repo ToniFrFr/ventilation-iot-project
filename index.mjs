@@ -28,7 +28,7 @@ app.set('view engine', 'ejs');
 app.use('/controller', controllerRouter);
 
 app.get("/:script", (req, res, next) => {
-	if(req.params.script === 'brain.js' || req.params.script === 'grapher.js') {
+	if(req.params.script === 'main.js') {
 		next();
 	}
 	next('route');
