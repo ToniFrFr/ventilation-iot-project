@@ -12,7 +12,6 @@ export class Db {
 	async connect() {
 		this.db = new Postgres(this.config);
 		await this.db.init();
-
 	}
 
 	getUsers() {

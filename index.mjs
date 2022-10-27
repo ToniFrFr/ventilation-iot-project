@@ -18,6 +18,7 @@ import { controllerRouter } from './routes/controller.mjs';
 import { Db, Measurement } from './db/index.mjs';
 import { getSession } from './auth.mjs';
 import { authRouter, isAuthenticated } from './routes/auth.mjs';
+import { ValidationError, DatabaseError } from './error.mjs';
 
 dotenv.config();
 
@@ -25,9 +26,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 
-app.set('view engine', 'ejs');
 
+app.set('view engine', 'ejs');
 app.use('/controller', controllerRouter);
+
+var TLS = false;
+if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
+	TLS = true;
+}
 
 app.get("/:script", (req, res, next) => {
 	if(req.params.script === 'main.js') {
@@ -38,6 +44,9 @@ app.get("/:script", (req, res, next) => {
 	readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
 		.then(contents => {
 			let data = contents.replaceAll('@DOMAIN@', process.env.DOMAIN || "localhost");
+			if(!TLS) {
+				data = data.replaceAll('wss://', 'ws://');
+			}
 			res.send(data);
 		}).catch(_ => {
 			console.error(`Error: can't find script ${req.params.script}.`)
@@ -59,12 +68,12 @@ const dbConfig = {
 const db = new Db(dbConfig);
 await db.connect();
 
-const session = getSession(db);
+const session = getSession(db, TLS);
 app.use(session);
 app.use('/auth', authRouter(db, session));
 
 var server;
-if('SERVER_CRT'in process.env && 'SERVER_KEY' in process.env) {
+if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
 	server = https
 		.createServer({
 			cert: readFileSync(process.env.SERVER_CRT),
@@ -80,17 +89,12 @@ if('SERVER_CRT'in process.env && 'SERVER_KEY' in process.env) {
 const wss = new WebSocketServer({ clientTracking: false, noServer: true });
 
 server.on('upgrade', function (request, socket, head) {
-	console.log('Parsing session from request...');
-
 	session(request, {}, () => {
 		if (!request.session.user) {
 			socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
 			socket.destroy();
 			return;
 		}
-
-		console.log('Session is parsed!');
-
 		wss.handleUpgrade(request, socket, head, function (ws) {
 			wss.emit('connection', ws, request);
 		});
@@ -102,66 +106,99 @@ const map = new Map();
 wss.on('connection', (socket, request) => {
 	const user = request.session.user;
 	map.set(user, socket);
-    console.log('sockets / connection');
 
     // Server-side receives a message from client
     socket.on('message', async (msg) => {
         let recMsg = JSON.parse(msg);
+		let payload;
+		let events = await db.getEvents();
 
         // Received message is a request to database
         if (recMsg.code == "DB_REQUEST") {
-            console.log('DB Request received');
-			console.log(recMsg);
+			try {
+				// Selection = temperature, relative humidity, co2, pressure
+				let selection = recMsg.selection;
+				let beginning, end;
+				try { beginning = new Date(recMsg.start); }
+				catch(e) { throw new ValidationError("Start date is invalid"); }
+				try { end = new Date(recMsg.end); }
+				catch(e) { throw new ValidationError("End date is invalid"); }
 
-            // Selection = temperature, relative humidity, co2, pressure
-            let selection = recMsg.selection;
-            let beginning = new Date(recMsg.start);
-            let end = new Date(recMsg.end);
+				let samples;
+				try {
+					let table = db.getMeasurements();
+					samples = table.getSamplesByTime(beginning, end);
+				} catch(e) {
+					throw new DatabaseError("Could not fetch requested data from database");
+				}
+				let sampleList = [];
 
-            let table = db.getMeasurements();
-            let samples = table.getSamplesByTime(beginning, end);
-            let sampleList = [];
+				for await (let sample of samples) {
+					sampleList.push(sample);
+				}
 
-            for await (let sample of samples) {
-                sampleList.push(sample);
-            }
-
-            let resp_payload = {
-                code: "DB_RESPONSE",
-                selection: selection,
-                data: sampleList
-            };
-			map.forEach((socket, _user) => socket.send(JSON.stringify(resp_payload)));
+				payload = {
+					code: "DB_RESPONSE",
+					selection: selection,
+					data: sampleList
+				};
+			} catch(e) {
+				let message;
+				if(e.name === "ValidationError") {
+					message = e.message;
+					console.error(`Error: invalid request from user: ${e.message}`);
+				} else if(e.name === "DatabaseError") {
+					message = e.message;
+					console.error(`Error: could not read requested data from the database`);
+				} else {
+					message = "Unknown error has occured"
+					console.error(e);
+				}
+				payload = {
+					code: "CLIENT_ERROR",
+					message: message,
+				};
+			}
         }
 
         // Received message is a MQTT to be sent to controller
         if (recMsg.code == "MQTT_SEND") {
-            console.log('MQTT SEND received');
+			try {
+				let mqtt_payload = {
+					auto: recMsg.auto === "true"
+				};
+				if (mqtt_payload.auto) {
+					mqtt_payload.pressure = parseFloat(recMsg.pressure);
+				} else {
+					mqtt_payload.speed = parseFloat(recMsg.speed);
+				}
+				try {
+					mqttClient.publish(`controller/settings`, JSON.stringify(mqtt_payload));
+					payload = {
+						code: "CLIENT_ACK"
+					};
+				} catch(e) {
+					payload = {
+						code: "CLIENT_ERROR",
+						message: "Could not send message to MQTT broker"
+					};
+				}
+			} catch(e) {
+				console.error("Error: recieved invalid MQTT settings message");
+			}
+		}
 
-            if (recMsg.auto === "true") {
-                console.log('Setting pressure');
-                let msg_to_controller = {
-                    auto: true,
-                    pressure: parseFloat(recMsg.pressure)
-                };
-                console.log(msg_to_controller);
-                mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
-            } else {
-                console.log('Setting speed');
-                let msg_to_controller = {
-                    auto: false,
-                    speed: parseFloat(recMsg.speed)
-                };
-                console.log(msg_to_controller);
-                mqttClient.publish(`controller/settings`, JSON.stringify(msg_to_controller))
-            }
-        }
-    })
+		try {
+			socket.send(JSON.stringify(payload));
+		} catch(e) {
+			console.error(`Error: could not send through websockets: ${e}`);
+		}
+	});
 
     socket.on('close', () => {
         console.log('sockets / close');
 		map.delete(user);
-    })
+    });
 })
 
 // New MQTT connection
@@ -193,6 +230,7 @@ mqttClient.on('message', async (topic, message) => {
         let table = db.getMeasurements();
         await table.submit(measurement);
 		console.log(mqtt_message_parsed);
+		mqtt_message_parsed.code = "MQTT_UPDATE";
 
         // Send received MQTT message to all connected WebSockets.
         // This might not stay this way, possibly send to DB and fetch from there to WebSockets?

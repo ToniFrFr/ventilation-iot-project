@@ -46,10 +46,11 @@ export function authRouter(db, session) {
 		}
 	});
 
-	router.get('/logout', (req, res, next) => {
+	router.get('/logout', async (req, res, next) => {
 		// clear the user from the session object and save.
 		// this will ensure that re-using the old session id
 		// does not have a logged in user
+		await events.log(req.session.user, "Logged out");
 		req.session.user = null;
 		req.session.save((err) => {
 			if(err) {
