@@ -35,7 +35,6 @@ app.get("/:script", (req, res, next) => {
 }, (req, res) => {
 	readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
 		.then(contents => {
-			console.log(process.env.DOMAIN || "localhost");
 			let data = contents.replaceAll('@DOMAIN@', process.env.DOMAIN || "localhost");
 			res.send(data);
 		}).catch(_ => {
@@ -106,7 +105,6 @@ wss.on('connection', (socket, request) => {
     // Server-side receives a message from client
     socket.on('message', async (msg) => {
         let recMsg = JSON.parse(msg);
-        console.log('index.mjs | socket.on(message), receiving WebSocket from client:');
 
         // Received message is a request to database
         if (recMsg.code == "DB_REQUEST") {
