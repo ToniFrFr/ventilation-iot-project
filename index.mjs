@@ -30,6 +30,7 @@ const app = express();
 app.set('view engine', 'ejs');
 app.use('/controller', controllerRouter);
 
+const PORT = process.env.LISTEN_PID > 0 ? 'systemd' : (process.env.PORT | 3000);
 var TLS = false;
 if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
 	TLS = true;
@@ -43,7 +44,11 @@ app.get("/:script", (req, res, next) => {
 }, (req, res) => {
 	readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
 		.then(contents => {
-			let data = contents.replaceAll('@DOMAIN@', process.env.DOMAIN || "localhost");
+			const domain = process.env.DOMAIN || "localhost";
+			let data;
+			if(PORT != 'systemd') {
+				data = contents.replaceAll('@DOMAIN@', domain + ":" + PORT);
+			}
 			if(!TLS) {
 				data = data.replaceAll('wss://', 'ws://');
 			}
@@ -111,7 +116,7 @@ wss.on('connection', (socket, request) => {
     socket.on('message', async (msg) => {
         let recMsg = JSON.parse(msg);
 		let payload;
-		let events = await db.getEvents();
+		let events = db.getEvents();
 
         // Received message is a request to database
         if (recMsg.code == "DB_REQUEST") {
@@ -272,8 +277,7 @@ app.get('*', (_req, res) => {
 
 
 if('DOMAIN' in process.env) {
-	const port = process.env.LISTEN_PID > 0 ? 'systemd' : (process.env.PORT | 3000);
-	server.listen(port, process.env.DOMAIN);
+	server.listen(PORT, process.env.DOMAIN);
 } else {
 	console.error("Error: environment variable DOMAIN must be configured");
 }
