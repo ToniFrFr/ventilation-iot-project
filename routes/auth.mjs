@@ -1,3 +1,7 @@
+'use strict';
+
+// @ts-check
+
 import { Router, urlencoded } from 'express';
 
 export function authRouter(db, session) {

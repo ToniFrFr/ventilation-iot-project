@@ -1,5 +1,7 @@
 'use strict';
 
+// @ts-check
+
 import express from 'express';
 import dotenv from 'dotenv';
 import { connect } from 'mqtt';

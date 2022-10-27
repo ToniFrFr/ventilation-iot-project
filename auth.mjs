@@ -1,3 +1,7 @@
+'use strict';
+
+// @ts-check
+
 import expressSession from 'express-session';
 import pgSession from 'connect-pg-simple';
 
