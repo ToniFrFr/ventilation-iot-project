@@ -58,11 +58,28 @@ class User {
 	}
 
 	async getCapabilities() {
-		this.table.getUserCaps(this.username);
+		let caps = [];
+		for await (let cap of this.table.getUserCaps(this.username)) {
+			caps.push(cap);
+		}
+		return caps;
 	}
 
 	async grantCapability(capability) {
-		this.table.grantCap(this.username, capability);
+		await this.table.grantCap(this.username, capability);
+	}
+
+	async hasCapability(cap) {
+		try {
+			let caps = await this.getCapabilities();
+			if(caps.includes(cap)) {
+				return true;
+			}
+			return false;
+		} catch(e) {
+			console.error(`Error: ${e}`)
+			return false;
+		}
 	}
 }
 
@@ -94,6 +111,14 @@ class Users {
 			return new User(this.table, username);
 		}
 		throw new Error("User does not exist");
+	}
+
+	async getUsers() {
+		let users = [];
+		for await (let username of this.table.getUsernames()) {
+			users.push(await this.getUser(username));
+		}
+		return users;
 	}
 }
 
@@ -127,6 +152,18 @@ class Events {
 
 	async log(username, message) {
 		await this.table.logEvent(username, message);
+	}
+
+	async* getEvents() {
+		for await (let e of this.table.getEvents()) {
+			yield e;
+		}
+	}
+
+	async* getEventsByUser(username) {
+		for await (let e of this.table.getEventsByUser(username)) {
+			yield e;
+		}
 	}
 }
 

@@ -207,7 +207,6 @@ class UsersTable {
 			await client.query('BEGIN');
 			const res = await client.query(queryText, [username]);
 			await client.query('COMMIT');
-			console.log(res.rows);
 			if(res.rows.length === 1 && res.rows[0].usermatch) {
 				return true;
 			}
@@ -248,11 +247,29 @@ class UsersTable {
 			await client.query('BEGIN');
 			const res = await client.query(queryText, [username, password]);
 			await client.query('COMMIT');
-			console.log(res.rows);
 			if(res.rows.length === 1) {
 				return res.rows[0].pswmatch;
 			}
 			return false;
+		} catch(e) {
+			await client.query('ROLLBACK');
+			throw e;
+		} finally {
+			client.release();
+		}
+	}
+
+	async* getUsernames() {
+		const client = await this.db.pool.connect();
+		try {
+			await client.query('BEGIN');
+			const queryText = `
+			SELECT username FROM users;`
+			const res = await client.query(queryText);
+			await client.query('COMMIT');
+			for await(let row of res.rows) {
+				yield row.username;
+			}
 		} catch(e) {
 			await client.query('ROLLBACK');
 			throw e;
@@ -381,7 +398,6 @@ class MeasurementsTable {
 			const res = await client.query(queryText, [time_low, time_high]);
 			await client.query('COMMIT');
 			for await(let row of res.rows) {
-				console.log(row);
 				yield row;
 			}
 		} catch(e) {
