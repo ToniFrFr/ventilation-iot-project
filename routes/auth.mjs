@@ -84,4 +84,20 @@ export function isAuthenticated(redirect) {
 	}
 }
 
+export function createHasCapability(db, cap) {
+	return async (req, res, next) => {
+		if(req.session.user) {
+			let users = db.getUsers();
+			let user = await users.getUser(req.session.user);
+			if(await user.hasCapability(cap)) {
+				next();
+			} else {
+				next('route');
+			}
+		} else {
+			next('route');
+		}
+	}
+}
+
 

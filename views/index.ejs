@@ -26,7 +26,9 @@
                     <div class="slidecontainer">
                         <p id="pressure-para-automatic"><b>Pressure (pa): </b></p>
                         <input type="range" min="0" max="120" value="60" class="slider" id="pressure-slider-automatic">
-                        <input type="submit" value="Send" id="btn_send_pressure">
+                        <button type="button" class="button" id="btn_send_pressure">
+							<span class="button_text">Send</span>
+						</button>
                     </div>
 
 
@@ -70,7 +72,9 @@
                     <div class="slidecontainer">
                         <p id="speed-para-manual"><b>Fan speed: </b></p>
                         <input type="range" min="0" max="100" value="50" class="slider" id="speed-slider-manual">
-                        <input type="submit" value="Send" id="btn_send_speed">
+                        <button type="button" class="button" id="btn_send_speed">
+							<span class="button_text">Send</span>
+						</button>
                     </div>
 
                     <div id="div-all-mode-invariants">
@@ -144,7 +148,9 @@
             <input type="datetime-local" id="time_start" name="time_start" required>
             <label for="time_end">Until: </label>
             <input type="datetime-local" id="time_end" name="time_end" required>
-            <input type="submit" value="Draw" id="btn_draw">
+            <button type="button" class="button" id="btn_draw">
+				<span class="button_text">Draw</span>
+			</button>
         </div>
 
         <div class="chartContainer">

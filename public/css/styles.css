@@ -68,7 +68,7 @@ input[type=radio] {
     padding: 1em 2em;
     height: auto;
     overflow: visible;
-    visibilty: visible;
+    visibility: visible;
     width: 40em;
 }
 input[type=radio]:checked + label h2 {
@@ -167,3 +167,61 @@ ul {
     font: 62.5%/1.5 Georgia, serif;
     font-size: 1.6em;
 }
+
+.button {
+	position: relative;
+	padding: 8px 16px;
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.button:active {
+	opacity: 0.9;
+}
+
+.button_text {
+	transition: all 0.2s;
+}
+
+.button--loading .button_text {
+	visibility: hidden;
+	opacity: 0;
+}
+
+.button--loading::after {
+	content: "";
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	border: 4px solid transparent;
+	border-top-color: #ffffff;
+	border-radius: 50%;
+	animation: button-loading-spinner 1s ease infinite;
+}
+
+@keyframes button-loading-spinner {
+	from {
+		transform: rotate(0turn);
+	}
+
+	to {
+		transform: rotate(1turn);
+	}
+}
+
+.error_box {
+    width: 100%;
+    display: inline-block;
+    padding: 10px 10px;
+    margin: 8px 0px;
+    box-sizing: border-box;
+	background-color: red;
+	color: white;
+}
+
+

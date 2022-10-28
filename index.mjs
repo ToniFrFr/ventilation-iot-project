@@ -14,49 +14,47 @@ import { readFile } from 'fs/promises';
 import https from 'https';
 import http from 'http';
 import systemd from 'systemd';
-import { controllerRouter } from './routes/controller.mjs';
+// import { controllerRouter } from './routes/controller.mjs';
 import { Db, Measurement } from './db/index.mjs';
 import { getSession } from './auth.mjs';
-import { authRouter, isAuthenticated } from './routes/auth.mjs';
+import { authRouter, createHasCapability, isAuthenticated } from './routes/auth.mjs';
 import { ValidationError, DatabaseError } from './error.mjs';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const app = express();
-
-
-app.set('view engine', 'ejs');
-app.use('/controller', controllerRouter);
 
 const PORT = process.env.LISTEN_PID > 0 ? 'systemd' : (process.env.PORT | 3000);
-var TLS = false;
-if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
-	TLS = true;
-}
+const TLS = ('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env);
+const DOMAIN = process.env.DOMAIN || "localhost";
+
+const app = express();
+app.set('view engine', 'ejs');
+// app.use('/controller', controllerRouter);
 
 app.get("/:script", (req, res, next) => {
-	if(req.params.script === 'main.js') {
-		next();
+	if(req.params.script === 'main.js' || req.params.script === 'admin.js') {
+		readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
+			.then(contents => {
+				let url = DOMAIN;
+				if(PORT !== 'systemd') {
+					url = url + ":" + PORT;
+				}
+				if(TLS) {
+					url = "wss://" + url;
+				} else {
+					url = "ws://" + url;
+				}
+				let data = contents.replaceAll('@URL@', url);
+				res.send(data);
+			}).catch(_ => {
+				console.error(`Error: can't find script ${req.params.script}.`)
+				res.sendStatus(404);
+			});
+	} else {
+		next('route');
 	}
-	next('route');
-}, (req, res) => {
-	readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
-		.then(contents => {
-			const domain = process.env.DOMAIN || "localhost";
-			let data;
-			if(PORT != 'systemd') {
-				data = contents.replaceAll('@DOMAIN@', domain + ":" + PORT);
-			}
-			if(!TLS) {
-				data = data.replaceAll('wss://', 'ws://');
-			}
-			res.send(data);
-		}).catch(_ => {
-			console.error(`Error: can't find script ${req.params.script}.`)
-			res.sendStatus(404);
-		});
 });
 
 app.use(express.static(__dirname + '/public/css'));
@@ -72,6 +70,8 @@ const dbConfig = {
 
 const db = new Db(dbConfig);
 await db.connect();
+
+const hasAdmin = createHasCapability(db, "admin");
 
 const session = getSession(db, TLS);
 app.use(session);
@@ -89,6 +89,7 @@ if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
 	server = http.createServer(app);
 }
 
+const websockets = new Map();
 
 // WebSockets configuration for server-client communication
 const wss = new WebSocketServer({ clientTracking: false, noServer: true });
@@ -107,10 +108,9 @@ server.on('upgrade', function (request, socket, head) {
 });
 
 // Clients
-const map = new Map();
 wss.on('connection', (socket, request) => {
 	const user = request.session.user;
-	map.set(user, socket);
+	websockets.set(user, socket);
 
     // Server-side receives a message from client
     socket.on('message', async (msg) => {
@@ -118,12 +118,19 @@ wss.on('connection', (socket, request) => {
 		let payload;
 		let events = db.getEvents();
 
-        // Received message is a request to database
+        // Received message is a request to database for measurements
         if (recMsg.code == "DB_REQUEST") {
+			console.log("Sending DB_RESPONSE");
 			try {
 				// Selection = temperature, relative humidity, co2, pressure
 				let selection = recMsg.selection;
 				let beginning, end;
+				if(recMsg.start === null) {
+					throw new ValidationError("Start date is invalid");
+				}
+				if(recMsg.end === null) {
+					throw new ValidationError("End date is invalid");
+				}
 				try { beginning = new Date(recMsg.start); }
 				catch(e) { throw new ValidationError("Start date is invalid"); }
 				try { end = new Date(recMsg.end); }
@@ -166,6 +173,77 @@ wss.on('connection', (socket, request) => {
 			}
         }
 
+        // Received message is a request to database for event logs
+        if (recMsg.code == "EVENT_LOG") {
+			console.log("Sending DB_RESPONSE");
+			try {
+				let username = recMsg.username;
+				let table = db.getUsers();
+				// null means request all
+				if(username !== null) {
+					// This tests whether user exists
+					await table.getUser(username);
+				}
+
+				let eventList;
+				try {
+					if (username) {
+						eventList = events.getEventsByUser(username);
+					} else {
+						eventList = events.getEvents();
+					}
+				} catch(e) {
+					throw new DatabaseError("Could not fetch requested data from database");
+				}
+
+				let responseList = [];
+				for await (let e of eventList) {
+					responseList.push(e);
+				}
+
+				payload = {
+					code: "DB_RESPONSE",
+					events: responseList
+				};
+			} catch(e) {
+				let message;
+				if(e.name === "DatabaseError") {
+					message = e.message;
+					console.error(`Error: could not read requested data from the database`);
+				} else {
+					message = "Unknown error has occured"
+					console.error(e);
+				}
+				payload = {
+					code: "CLIENT_ERROR",
+					message: message,
+				};
+			}
+        }
+
+		if (recMsg.code == "CREATE_USER") {
+			try {
+				let table = db.getUsers();
+				let admin = await table.getUser(user);
+				if(admin.hasCapability("admin")) {
+					await table.createUser(recMsg.username, recMsg.password);
+					payload = {
+						code: "CLIENT_ACK"
+					};
+				}
+				payload = {
+					code: "CLIENT_ERROR",
+					message: "Not permitted to create accounts"
+				};
+			} catch(e) {
+				payload = {
+					code: "CLIENT_ERROR",
+					message: "Could not create account",
+				};
+			}
+		}
+
+		// Recieved message is a request to list users
         // Received message is a MQTT to be sent to controller
         if (recMsg.code == "MQTT_SEND") {
 			try {
@@ -189,7 +267,10 @@ wss.on('connection', (socket, request) => {
 					};
 				}
 			} catch(e) {
-				console.error("Error: recieved invalid MQTT settings message");
+				payload = {
+					code: "CLIENT_ERROR",
+					message: "Received invalid MQTT settings message"
+				};
 			}
 		}
 
@@ -202,16 +283,14 @@ wss.on('connection', (socket, request) => {
 
     socket.on('close', () => {
         console.log('sockets / close');
-		map.delete(user);
+		websockets.delete(user);
     });
 })
 
-// New MQTT connection
-
-// Actual:
-// const mqttClient = connect('mqtt://192.168.75.42:1883');
 // Simulator:
-const mqttClient = connect('mqtt://192.168.75.42:1883')
+// const mqttClient = connect('mqtt://192.168.75.42:1883');
+// Actual:
+const mqttClient = connect('mqtt://192.168.1.254:1883')
 
 // On successful connection, subscribe to topic 'controller/status'
 mqttClient.on('connect', () => {
@@ -219,8 +298,8 @@ mqttClient.on('connect', () => {
     mqttClient.subscribe('controller/status', err => {
         console.log('MQTT: Subscribed to controller/status.');
         if (err) throw err;
-    })
-})
+    });
+});
 
 // Received MQTT message
 mqttClient.on('message', async (topic, message) => {
@@ -239,14 +318,14 @@ mqttClient.on('message', async (topic, message) => {
 
         // Send received MQTT message to all connected WebSockets.
         // This might not stay this way, possibly send to DB and fetch from there to WebSockets?
-		map.forEach((socket, _user) => socket.send(JSON.stringify(mqtt_message_parsed)));
+		websockets.forEach((socket, _user) => socket.send(JSON.stringify(mqtt_message_parsed)));
     }
 
     // Discard messages if topic is incorrect
     else {
         console.log('mqttClient.on() index.js, incorrect MQTT topic received');
     }
-})
+});
 
 // Front page
 app.get('/', isAuthenticated(), (_req, res) => {
@@ -266,8 +345,8 @@ app.get('/login', (req, res) => {
 });
 
 // Activity history
-app.get('/history', isAuthenticated(), (_req, res) => {
-    res.render('history');
+app.get('/admin', hasAdmin, (_req, res) => {
+    res.render('admin');
 });
 
 // For redirecting everything to the login page when unauthorized
@@ -276,8 +355,8 @@ app.get('*', (_req, res) => {
 });
 
 
-if('DOMAIN' in process.env) {
-	server.listen(PORT, process.env.DOMAIN);
+if(DOMAIN) {
+	server.listen(PORT, DOMAIN);
 } else {
 	console.error("Error: environment variable DOMAIN must be configured");
 }

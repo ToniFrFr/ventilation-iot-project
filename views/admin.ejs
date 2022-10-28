@@ -2,24 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Activity History</title>
+    <title>Admin</title>
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
 <div class="row">
     <%- include('header.ejs')%></div>
 <div class="row">
-<div style="text-align: center;"> <h1> Activity History </h1> </div>
-
-<div class="center">
-    <input style="width: 200px;" type="text" class="user_selection" id="user_selection" placeholder="Enter User, empty will show all" name="username">
-    <input type="submit" value="Show history" id="btn_history">
-    <div class="history_container">
-        <ul class="all_users_history" id="all_users_history">
-            <!-- historian.js populates the list with <li> elements -->
-        </ul>
-    </div>
+	<article class="tabs">
+		<input type="radio" checked="checked" id="history" name="group-one">
+		<label for="history" class="tab_block">
+			<section>
+				<h2>Activity History</h2>
+				<div>
+    				<input style="width: 200px;"
+						   type="text"
+						   class="user_selection"
+						   id="user_selection"
+						   placeholder="Enter User, empty will show all"
+						   name="username">
+    				<input type="submit" value="Show history for user" id="btn_history">
+    				<input type="submit" value="Show history for all" id="btn_history_all">
+				</div>
+				<div>
+    				<table id="history_container">
+    				</table>
+				</div>
+			</section>
+		</label>
+		<input type="radio" id="user_create" name="group-one">
+		<label for="user_create" class="tab_block">
+			<section>
+				<h2>Account Creation</h2>
+				<div>
+					<label for="new_username">Username: </label>
+    				<input style="width: 200px;"
+						   type="text"
+						   id="new_username"
+						   placeholder="Enter Username"
+						   name="new_username"
+						   required>
+				</div>
+				<div>
+					<label for="new_password">Password: </label>
+    				<input style="width: 200px;"
+						   type="password"
+						   id="new_password"
+						   placeholder="Enter Password"
+						   name="new_password"
+						   required>
+					<button class="button" id="create_user">Create</button>
+				</div>
+			</section>
+		</label>
+	</article>
+	<div id="errors"></div>
 </div>
 </body>
-<script src="historian.js"></script>
+<script src="admin.js"></script>
 </html>

@@ -33,6 +33,7 @@ function displayError(msg) {
 	let bold = document.createElement('b');
 	let button = document.createElement('button');
 	box.id = `error ${max + 1}`;
+	box.classList.add('error_box');
 	bold.textContent = `Error: ${msg}`;
 	button.onclick = () => { document.getElementById(box.id).remove(); };
 	button.textContent = 'Dismiss';
@@ -196,7 +197,7 @@ function parseData(message) {
 
 // Drawing individual graphs
 function drawIndividuals() {
-    try {console.log('grapher.js | Drawing individual graphs.')
+    try {console.log('main.js | Drawing individual graphs.')
 
         // Fan Speed, left
         let data_fanspeed = new google.visualization.DataTable();
@@ -230,7 +231,7 @@ function drawIndividuals() {
 // Drawing selective chart
 function drawReactive() {
     try {
-        console.log('grapher.js | Drawing Reactive graph.')
+        console.log('main.js | Drawing Reactive graph.')
         // Reactive chart
         let data_configurable = new google.visualization.DataTable();
         data_configurable.addColumn('number', 'SampleNumber');
@@ -272,7 +273,7 @@ function drawReactive() {
 // Graph with user selected range
 function drawConfigurable(data) {
     try {
-        console.log('grapher.js | Drawing Range Graph.');
+        console.log('main.js | Drawing Range Graph.');
         console.log(data)
 
         let selection = data.selection;
@@ -356,12 +357,12 @@ function drawConfigurable(data) {
 
 
 // WebSocket client
-let graphClient = new WebSocket('wss://@DOMAIN@');
+let graphClient = new WebSocket('@URL@');
 
 // Selectable range graph request button
 let drawButton = document.getElementById('btn_draw');
-drawButton.addEventListener("click", async (event) => {
-    event.preventDefault();
+drawButton.addEventListener("click", async (_) => {
+	drawButton.classList.add('button--loading');
 
     let startTime = new Date(document.getElementById('time_start').value);
     let endTime = new Date(document.getElementById('time_end').value);
@@ -376,31 +377,49 @@ drawButton.addEventListener("click", async (event) => {
     graphClient.send(JSON.stringify(graph_Payload));
 })
 
-// Receiving WebSocket messages from Server
-graphClient.onmessage = (event) => {
-    const MSG = JSON.parse(event.data);
-    let MSG_CODE = MSG.code;
+function clearLoading() {
+	let buttons = document.getElementsByClassName("button--loading");
+	for (let i = 0; i < buttons.length; i++) {
+		if(buttons[i].classList.contains('button--loading')) {
+			buttons[i].classList.remove('button--loading');
+		}
+	}
+}
 
-    if (MSG_CODE === "DB_RESPONSE") {
-        drawConfigurable(MSG);
-    } else if(MSG_CODE === "MQTT_UPDATE") {
-        parseData(MSG)
-		// realtime graphs
-        drawIndividuals();
-        drawReactive();
-		// numeric displays
-    	updateDisplays(MSG);
-	} else if(MSG_CODE === "CLIENT_ERROR") {
-		displayError(MSG);
-	} else if(MSG_CODE === "CLIENT_ACK") {
-	} else {
-		console.error(`Unknown message from server, code: ${MSG_CODE}`);
+// Receiving WebSocket messages from Server
+graphClient.onmessage = (input) => {
+	try {
+    	const MSG = JSON.parse(input.data);
+    	let MSG_CODE = MSG.code;
+
+    	if (MSG_CODE === "DB_RESPONSE") {
+			clearLoading();
+    	    drawConfigurable(MSG);
+    	} else if(MSG_CODE === "MQTT_UPDATE") {
+    	    parseData(MSG)
+			// realtime graphs
+    	    drawIndividuals();
+    	    drawReactive();
+			// numeric displays
+    		updateDisplays(MSG);
+		} else if(MSG_CODE === "CLIENT_ERROR") {
+			clearLoading();
+			displayError(MSG.message);
+		} else if(MSG_CODE === "CLIENT_ACK") {
+			clearLoading();
+		} else {
+			console.error(`Unknown message from server, code: ${MSG_CODE}`);
+		}
+	} catch(e) {
+		console.error(e);
+		console.error(input.data);
 	}
 }
 
 // Send speed button & event listener
 let btn_sendSpeed = document.getElementById("btn_send_speed");
 btn_sendSpeed.addEventListener('click', (e) => {
+	btn_sendSpeed.classList.add('button--loading');
     let targetSpeed = getSpeed();
 
     // Payload to be sent to 'topic'
@@ -418,6 +437,7 @@ btn_sendSpeed.addEventListener('click', (e) => {
 // Send pressure button & event listener
 let btn_sendPressure = document.getElementById("btn_send_pressure");
 btn_sendPressure.addEventListener('click', (e) => {
+	btn_sendPressure.classList.add('button--loading');
     let targetPressure = getPressure();
     // Payload to be published to 'topic'
     let payload = {
