@@ -13,12 +13,10 @@ For files that are stored in the public folder as static files, use route /publi
 For routes that effect the controller ie. settings, use /controller
 
 ## Database
-Configure PGPASSWORD environment variable to use database. The 'pgcrypto' extension must also have been enabled prior to the first run.
+In `scripts/db.bash` is an example deployment process to prepare a database for use with server.
+
+Configure `.env` environment variables to use the database. The 'pgcrypto' extension must also have been enabled in the database prior to the first run.
 ```sql
 CREATE EXTENSION pgcrypto;
 ```
 
-## Development
-Additional routes should be developed the same way as the controller.js router is developed, so develop the routes in a specific file, use module.export to export the router, and then include the router using require()
-
-Example of this can be learned from controller.js router
