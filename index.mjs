@@ -18,6 +18,7 @@ import { Db, Measurement } from './db/index.mjs';
 import { getSession } from './auth.mjs';
 import { authRouter, createHasCapability, isAuthenticated } from './routes/auth.mjs';
 import { ValidationError, DatabaseError } from './error.mjs';
+import { MQTT } from './mqtt.mjs';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ if('SERVER_CRT' in process.env && 'SERVER_KEY' in process.env) {
 }
 
 const websockets = new Map();
+const mqtt = new MQTT(db, websockets, "mqtt://192.168.1.254:1883");
 
 // WebSockets configuration for server-client communication
 const wss = new WebSocketServer({ clientTracking: false, noServer: true });
@@ -172,7 +174,7 @@ wss.on('connection', (socket, request) => {
         }
 
         // Received message is a request to database for event logs
-        if (recMsg.code == "EVENT_LOG") {
+		else if (recMsg.code == "EVENT_LOG") {
 			console.log("Sending DB_RESPONSE");
 			try {
 				let username = recMsg.username;
@@ -219,7 +221,7 @@ wss.on('connection', (socket, request) => {
 			}
         }
 
-		if (recMsg.code == "CREATE_USER") {
+		else if (recMsg.code == "CREATE_USER") {
 			try {
 				let table = db.getUsers();
 				let admin = await table.getUser(user);
@@ -241,9 +243,31 @@ wss.on('connection', (socket, request) => {
 			}
 		}
 
-		// Recieved message is a request to list users
+		else if (recMsg.code == "MQTT_BROKER") {
+			try {
+				let table = db.getUsers();
+				let admin = await table.getUser(user);
+				if(admin.hasCapability("admin")) {
+					mqtt.configure(recMsg.url);
+					payload = {
+						code: "CLIENT_ACK"
+					};
+				} else {
+					payload = {
+						code: "CLIENT_ERROR",
+						message: "Not permitted to change mqtt broker"
+					};
+				}
+			} catch(e) {
+				payload = {
+					code: "CLIENT_ERROR",
+					message: "Could not change mqtt broker",
+				};
+			}
+		}
+
         // Received message is a MQTT to be sent to controller
-        if (recMsg.code == "MQTT_SEND") {
+		else if (recMsg.code == "MQTT_SEND") {
 			try {
 				let mqtt_payload = {
 					auto: recMsg.auto === "true"
@@ -254,7 +278,7 @@ wss.on('connection', (socket, request) => {
 					mqtt_payload.speed = parseFloat(recMsg.speed);
 				}
 				try {
-					mqttClient.publish(`controller/settings`, JSON.stringify(mqtt_payload));
+					mqtt.pushSettings(JSON.stringify(mqtt_payload));
 					payload = {
 						code: "CLIENT_ACK"
 					};
@@ -272,6 +296,13 @@ wss.on('connection', (socket, request) => {
 			}
 		}
 
+		else {
+			payload = {
+				code: "CLIENT_ERROR",
+				message: `Received invalid request: ${recMsg}`
+			};
+		}
+
 		try {
 			socket.send(JSON.stringify(payload));
 		} catch(e) {
@@ -284,46 +315,6 @@ wss.on('connection', (socket, request) => {
 		websockets.delete(user);
     });
 })
-
-// Simulator:
-// const mqttClient = connect('mqtt://192.168.75.42:1883');
-// Actual:
-const mqttClient = connect('mqtt://192.168.1.254:1883')
-
-// On successful connection, subscribe to topic 'controller/status'
-mqttClient.on('connect', () => {
-    console.log('MQTT: Connected')
-    mqttClient.subscribe('controller/status', err => {
-        console.log('MQTT: Subscribed to controller/status.');
-        if (err) throw err;
-    });
-});
-
-// Received MQTT message
-mqttClient.on('message', async (topic, message) => {
-    // All received messages should have topic 'controller/status'
-    if (topic === 'controller/status') {
-        console.log('index.js | mqttClient.on(), receiving MQTT from broker');
-        let mqtt_message_parsed = JSON.parse(message);
-
-        // Sending measurements to DB
-        mqtt_message_parsed.datetime = new Date();
-        let measurement = new Measurement(mqtt_message_parsed);
-        let table = db.getMeasurements();
-        await table.submit(measurement);
-		console.log(mqtt_message_parsed);
-		mqtt_message_parsed.code = "MQTT_UPDATE";
-
-        // Send received MQTT message to all connected WebSockets.
-        // This might not stay this way, possibly send to DB and fetch from there to WebSockets?
-		websockets.forEach((socket, _user) => socket.send(JSON.stringify(mqtt_message_parsed)));
-    }
-
-    // Discard messages if topic is incorrect
-    else {
-        console.log('mqttClient.on() index.js, incorrect MQTT topic received');
-    }
-});
 
 // Front page
 app.get('/', isAuthenticated(), (_req, res) => {

@@ -66,8 +66,8 @@ client.onmessage = (input) => {
 		}
 	} else if(code === "CLIENT_ACK") {
 		clearLoading();
-	} else if(code === "CLIENT_ERR") {
-		displayError(recMsq.message);
+	} else if(code === "CLIENT_ERROR") {
+		displayError(msg.message);
 		clearLoading();
 	} else {
 		console.error(`Unrecognized message code ${code}`);
@@ -80,6 +80,16 @@ function fetch_events(username) {
 		username: username
 	}));
 }
+
+let setMqttBtn = document.getElementById("set_broker");
+setMqttBtn.addEventListener("click", async (input) => {
+	setMqttBtn.classList.add('button--loading');
+	let url = document.getElementById("new_broker").value;
+	client.send(JSON.stringify({
+		code: "MQTT_BROKER",
+		url: url
+	}));
+});
 
 let createBtn = document.getElementById("create_user");
 createBtn.addEventListener("click", async (input) => {
