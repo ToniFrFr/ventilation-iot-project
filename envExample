@@ -1,0 +1,13 @@
+//EXAMPLE .env file, create your own when developing the backend, can store variables such below
+//To access the variables in node *.js-file, use process.env.variablename
+//NOTE: filename has to be .env
+#PORT=3000
+PGHOST="db.tikkanen.io"
+PGPASSWORD=password
+DOMAIN="local.tikkanen.io"
+COOKIE_SECRET="random_secret"
+NODE_ENV="development"
+# For TLS
+#PORT=443
+#SERVER_KEY=/path/to/key
+#SERVER_CRT=/path/to/key
