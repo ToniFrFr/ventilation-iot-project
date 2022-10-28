@@ -1,4 +1,7 @@
-let pressure, speed, activeTab;
+'use strict';
+// @ts-check
+import { clearLoading, displayError } from '/common.mjs';
+let pressure, speed;
 let toggled = true;
 
 // Temperature, relative humidity and Co2 displays
@@ -17,30 +20,6 @@ function setPressure (targetPressure) {
 }
 function setSpeed (targetSpeed) {
     speed = targetSpeed;
-}
-
-function displayError(msg) {
-	let errors = document.getElementById('errors');
-	let max = 0;
-	for (let error of errors.children) {
-		let n = error.id.split(" ")[1];
-		if (n > max) {
-			max = n;
-		}
-	}
-	let box = document.createElement('div');
-	let text = document.createElement('p');
-	let bold = document.createElement('b');
-	let button = document.createElement('button');
-	box.id = `error ${max + 1}`;
-	box.classList.add('error_box');
-	bold.textContent = `Error: ${msg}`;
-	button.onclick = () => { document.getElementById(box.id).remove(); };
-	button.textContent = 'Dismiss';
-	text.appendChild(bold);
-	box.appendChild(text);
-	box.appendChild(button);
-	errors.appendChild(box);
 }
 
 function updateDisplays(receivedJSON) {
@@ -67,19 +46,6 @@ function updateDisplays(receivedJSON) {
     rhDisplays.forEach(display => display.innerHTML = `<b>Rh: </b>${receivedJSON.rh}%`);
     co2Displays.forEach(display => display.innerHTML = `<b>Co2: </b>${receivedJSON.co2}`);
 }
-
-// Listen to tab switching
-let radioButtons = document.querySelectorAll('input[name="group-one"]');
-radioButtons.forEach((button) => {
-    button.addEventListener("click", (e) => {
-        toggled = true;
-        if (button.id === 'auto-mode') {
-            activeTab = 'AUTO';
-        } else {
-            activeTab = 'MANUAL';
-        }
-    })
-})
 
 
 // Pressure slider & display
@@ -132,8 +98,6 @@ let pressureChecked = true;
 let rhChecked = true;
 let speedChecked = true;
 
-let ERR_MSG;
-
 google.charts.load('current',{packages:['corechart']});
 google.charts.setOnLoadCallback(drawReactive);
 
@@ -144,6 +108,11 @@ function readChecked() {
     if ((document.getElementById('checkPressure')).checked === true) pressureChecked = true; else pressureChecked = false;
     if ((document.getElementById('checkRh')).checked === true) rhChecked = true; else rhChecked = false;
     if ((document.getElementById('checkSpeed')).checked === true) speedChecked = true; else speedChecked = false;
+}
+
+let checkboxes = document.getElementsByClassName('checkbox');
+for(let i = 0; i < checkboxes.length; i++) {
+	checkboxes[i].onclick = readChecked;
 }
 
 // Adding elements to array, removing last element if length exceeded
@@ -376,15 +345,6 @@ drawButton.addEventListener("click", async (_) => {
     };
     graphClient.send(JSON.stringify(graph_Payload));
 })
-
-function clearLoading() {
-	let buttons = document.getElementsByClassName("button--loading");
-	for (let i = 0; i < buttons.length; i++) {
-		if(buttons[i].classList.contains('button--loading')) {
-			buttons[i].classList.remove('button--loading');
-		}
-	}
-}
 
 // Receiving WebSocket messages from Server
 graphClient.onmessage = (input) => {

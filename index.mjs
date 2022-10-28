@@ -33,7 +33,7 @@ const app = express();
 app.set('view engine', 'ejs');
 
 app.get("/:script", (req, res, next) => {
-	if(req.params.script === 'main.js' || req.params.script === 'admin.js') {
+	if(req.params.script === 'main.mjs' || req.params.script === 'admin.mjs' || req.params.script === 'common.mjs') {
 		readFile(path.join(__dirname, 'public', 'scripts', req.params.script), { encoding: "UTF-8" })
 			.then(contents => {
 				let url = DOMAIN;
@@ -46,6 +46,7 @@ app.get("/:script", (req, res, next) => {
 					url = "ws://" + url;
 				}
 				let data = contents.replaceAll('@URL@', url);
+				res.type("text/javascript");
 				res.send(data);
 			}).catch(_ => {
 				console.error(`Error: can't find script ${req.params.script}.`)

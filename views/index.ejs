@@ -5,6 +5,7 @@
     <title>Ventilation Controller</title>
     <link href="styles.css" rel="stylesheet">
     <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="module" src="/common.mjs"></script>
 
 </head>
 <body>
@@ -111,23 +112,23 @@
         <div class="checkBoxes">
             <div class="checkBoxDiv">
                 <label for="checkTemp">Graph temperature</label>
-                <input type="checkbox" class="checkbox" id="checkTemp" onclick="readChecked()" checked />
+                <input type="checkbox" class="checkbox" id="checkTemp" checked />
             </div>
             <div class="checkBoxDiv">
                 <label for="checkCo2">Graph co2</label>
-                <input type="checkbox" class="checkbox" id="checkCo2" onclick="readChecked()" checked />
+                <input type="checkbox" class="checkbox" id="checkCo2" checked />
             </div>
             <div class="checkBoxDiv">
                 <label for="checkRh">Graph rel. humidity</label>
-                <input type="checkbox" class="checkbox" id="checkRh" onclick="readChecked()" checked />
+                <input type="checkbox" class="checkbox" id="checkRh" checked />
             </div>
             <div class="checkBoxDiv">
                 <label for="checkPressure">Graph pressure</label>
-                <input type="checkbox" class="checkbox" id="checkPressure" onclick="readChecked()" checked />
+                <input type="checkbox" class="checkbox" id="checkPressure" checked />
             </div>
             <div class="checkBoxDiv">
                 <label for="checkSpeed">Graph fan speed</label>
-                <input type="checkbox" class="checkbox" id="checkSpeed" onclick="readChecked()" checked />
+                <input type="checkbox" class="checkbox" id="checkSpeed" checked />
             </div>
         </div>
     </div>
@@ -161,7 +162,7 @@
 
 </div>
 
-<script src="main.js"></script>
+<script type="module" src="main.mjs"></script>
 
 </body>
 </html>
