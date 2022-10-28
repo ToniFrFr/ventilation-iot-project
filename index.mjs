@@ -14,7 +14,6 @@ import { readFile } from 'fs/promises';
 import https from 'https';
 import http from 'http';
 import systemd from 'systemd';
-// import { controllerRouter } from './routes/controller.mjs';
 import { Db, Measurement } from './db/index.mjs';
 import { getSession } from './auth.mjs';
 import { authRouter, createHasCapability, isAuthenticated } from './routes/auth.mjs';
@@ -31,7 +30,6 @@ const DOMAIN = process.env.DOMAIN || "localhost";
 
 const app = express();
 app.set('view engine', 'ejs');
-// app.use('/controller', controllerRouter);
 
 app.get("/:script", (req, res, next) => {
 	if(req.params.script === 'main.js' || req.params.script === 'admin.js') {
